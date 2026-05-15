@@ -166,7 +166,7 @@
   .field.half { flex: 0 0 calc(50% - 6px); min-width: 120px; }
 
   /* Stat cards */
-  .stat-row { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 24px; }
+  .stat-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 24px; }
   /* stat-card defined below with overflow fix */
   .stat-card.accent { border-color: var(--border-accent); }
   .stat-label { font-size: 11px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 6px; }
@@ -315,7 +315,7 @@
 
   @media (max-width: 600px) {
     .field.half { flex: 1 1 100%; }
-    .stat-card { min-width: 80px; }
+    .stat-card { min-width: 0; }
     .plan-grid { grid-template-columns: 1fr; }
     .plan-card.full { grid-column: 1; }
 
@@ -459,7 +459,7 @@
       </div>
       <div id="quick-stats-box" class="quick-stats" style="display:none">
         <div class="quick-stats-label">Quick Stats</div>
-        <div class="stat-row" id="quick-stat-cards"></div>
+        <div class="stat-row" id="quick-stat-cards" style="grid-template-columns:repeat(3,1fr)"></div>
       </div>
     </div>
 
@@ -506,7 +506,7 @@
       </div>
 
       <div class="calc-search-wrap">
-        <input id="calc-search-input" type="text" placeholder="Search food (e.g. chicken breast, banana, oats...)" autocomplete="off" />
+        <input id="calc-search-input" type="text" placeholder="Search food (e.g. chicken, salmon, rice, eggs, oats...)" autocomplete="off" />
         <button id="calc-search-btn">Search</button>
       </div>
       <div id="calc-status"></div>
@@ -1117,33 +1117,123 @@ function getMacrosForGrams(product, grams) {
   };
 }
 
-function renderCalcResults(products) {
-  const container = document.getElementById('calc-results');
-  if (!products.length) {
-    container.innerHTML = '<p style="color:var(--text-muted);font-size:13px">No results found. Try a different search term.</p>';
+
+// ---- FOOD DATABASE (offline, no API needed) ----
+// Per-100g values: { kcal, protein, carbs, fat, serving_g, serving_label }
+const FOOD_DB_SEARCH = [
+  // Proteins
+  { name:'Chicken Breast (grilled)', cat:'Protein', kcal:165, p:31, c:0, f:3.6, sg:100, sl:'100g' },
+  { name:'Chicken Thigh (grilled)', cat:'Protein', kcal:209, p:26, c:0, f:11, sg:100, sl:'100g' },
+  { name:'Ground Turkey (93% lean)', cat:'Protein', kcal:148, p:21, c:0, f:7, sg:100, sl:'100g' },
+  { name:'Ground Beef (90% lean)', cat:'Protein', kcal:176, p:20, c:0, f:10, sg:100, sl:'100g' },
+  { name:'Sirloin Steak', cat:'Protein', kcal:207, p:26, c:0, f:11, sg:100, sl:'100g' },
+  { name:'Salmon (Atlantic)', cat:'Protein', kcal:208, p:20, c:0, f:13, sg:100, sl:'100g' },
+  { name:'Tuna (canned in water)', cat:'Protein', kcal:86, p:19, c:0, f:0.5, sg:85, sl:'1 can (85g)' },
+  { name:'Shrimp (cooked)', cat:'Protein', kcal:99, p:24, c:0, f:0.3, sg:100, sl:'100g' },
+  { name:'Tilapia (baked)', cat:'Protein', kcal:128, p:26, c:0, f:2.7, sg:100, sl:'100g' },
+  { name:'Pork Tenderloin', cat:'Protein', kcal:143, p:26, c:0, f:3.5, sg:100, sl:'100g' },
+  { name:'Eggs (whole)', cat:'Protein', kcal:155, p:13, c:1.1, f:11, sg:50, sl:'1 large egg (50g)' },
+  { name:'Egg Whites', cat:'Protein', kcal:52, p:11, c:0.7, f:0.2, sg:100, sl:'100g' },
+  { name:'Greek Yogurt (plain, non-fat)', cat:'Protein', kcal:59, p:10, c:3.6, f:0.4, sg:170, sl:'1 container (170g)' },
+  { name:'Cottage Cheese (low-fat)', cat:'Protein', kcal:72, p:12, c:2.7, f:1, sg:113, sl:'½ cup (113g)' },
+  { name:'Whey Protein Powder', cat:'Protein', kcal:120, p:24, c:3, f:1.5, sg:30, sl:'1 scoop (30g)' },
+  // Carbs
+  { name:'White Rice (cooked)', cat:'Carbs', kcal:130, p:2.7, c:28, f:0.3, sg:186, sl:'1 cup cooked (186g)' },
+  { name:'Brown Rice (cooked)', cat:'Carbs', kcal:216, p:5, c:45, f:1.8, sg:202, sl:'1 cup cooked (202g)' },
+  { name:'Oats (dry)', cat:'Carbs', kcal:389, p:17, c:66, f:7, sg:80, sl:'1 cup dry (80g)' },
+  { name:'Sweet Potato (baked)', cat:'Carbs', kcal:86, p:1.6, c:20, f:0.1, sg:130, sl:'1 medium (130g)' },
+  { name:'White Potato (baked)', cat:'Carbs', kcal:93, p:2.5, c:21, f:0.1, sg:173, sl:'1 medium (173g)' },
+  { name:'Whole Wheat Bread', cat:'Carbs', kcal:247, p:13, c:41, f:4, sg:28, sl:'1 slice (28g)' },
+  { name:'White Bread', cat:'Carbs', kcal:265, p:9, c:49, f:3, sg:28, sl:'1 slice (28g)' },
+  { name:'Banana', cat:'Carbs', kcal:89, p:1.1, c:23, f:0.3, sg:118, sl:'1 medium (118g)' },
+  { name:'Apple', cat:'Carbs', kcal:52, p:0.3, c:14, f:0.2, sg:182, sl:'1 medium (182g)' },
+  { name:'Pasta (cooked)', cat:'Carbs', kcal:131, p:5, c:25, f:1.1, sg:140, sl:'1 cup cooked (140g)' },
+  { name:'Quinoa (cooked)', cat:'Carbs', kcal:120, p:4.4, c:21, f:1.9, sg:185, sl:'1 cup cooked (185g)' },
+  { name:'Tortilla (whole wheat)', cat:'Carbs', kcal:294, p:9, c:47, f:7, sg:45, sl:'1 medium (45g)' },
+  { name:'Rice Cakes', cat:'Carbs', kcal:387, p:8, c:81, f:3, sg:9, sl:'1 cake (9g)' },
+  { name:'Granola', cat:'Carbs', kcal:471, p:10, c:64, f:20, sg:58, sl:'½ cup (58g)' },
+  // Vegetables
+  { name:'Broccoli (cooked)', cat:'Vegetables', kcal:35, p:2.4, c:7, f:0.4, sg:156, sl:'1 cup (156g)' },
+  { name:'Spinach (raw)', cat:'Vegetables', kcal:23, p:2.9, c:3.6, f:0.4, sg:30, sl:'1 cup (30g)' },
+  { name:'Mixed Greens', cat:'Vegetables', kcal:20, p:1.8, c:3.5, f:0.3, sg:85, sl:'3 cups (85g)' },
+  { name:'Bell Pepper', cat:'Vegetables', kcal:31, p:1, c:6, f:0.3, sg:149, sl:'1 medium (149g)' },
+  { name:'Asparagus', cat:'Vegetables', kcal:20, p:2.2, c:3.7, f:0.1, sg:134, sl:'1 cup (134g)' },
+  { name:'Green Beans', cat:'Vegetables', kcal:31, p:1.8, c:7, f:0.1, sg:125, sl:'1 cup (125g)' },
+  { name:'Zucchini', cat:'Vegetables', kcal:17, p:1.2, c:3.1, f:0.3, sg:124, sl:'1 medium (124g)' },
+  // Fats
+  { name:'Avocado', cat:'Fats', kcal:160, p:2, c:9, f:15, sg:136, sl:'½ avocado (136g)' },
+  { name:'Peanut Butter', cat:'Fats', kcal:588, p:25, c:20, f:50, sg:32, sl:'2 tbsp (32g)' },
+  { name:'Almond Butter', cat:'Fats', kcal:614, p:21, c:19, f:55, sg:32, sl:'2 tbsp (32g)' },
+  { name:'Mixed Nuts', cat:'Fats', kcal:607, p:14, c:21, f:54, sg:28, sl:'1 oz (28g)' },
+  { name:'Almonds', cat:'Fats', kcal:579, p:21, c:22, f:50, sg:28, sl:'1 oz (28g)' },
+  { name:'Olive Oil', cat:'Fats', kcal:884, p:0, c:0, f:100, sg:14, sl:'1 tbsp (14g)' },
+  { name:'Whole Milk', cat:'Dairy', kcal:61, p:3.2, c:4.8, f:3.3, sg:244, sl:'1 cup (244g)' },
+  { name:'2% Milk', cat:'Dairy', kcal:50, p:3.4, c:4.8, f:2, sg:244, sl:'1 cup (244g)' },
+  { name:'Cheddar Cheese', cat:'Dairy', kcal:403, p:25, c:1.3, f:33, sg:28, sl:'1 oz (28g)' },
+  // Snacks & supplements
+  { name:'Beef Jerky', cat:'Snacks', kcal:410, p:33, c:11, f:26, sg:28, sl:'1 oz (28g)' },
+  { name:'Protein Bar (generic)', cat:'Snacks', kcal:367, p:27, c:40, f:10, sg:60, sl:'1 bar (60g)' },
+  { name:'Chocolate Milk (low-fat)', cat:'Recovery', kcal:63, p:3.2, c:9.9, f:1, sg:244, sl:'1 cup (244g)' },
+  { name:'Gatorade', cat:'Recovery', kcal:26, p:0, c:7, f:0, sg:240, sl:'1 cup (240g)' },
+  { name:'Honey', cat:'Carbs', kcal:304, p:0.3, c:82, f:0, sg:21, sl:'1 tbsp (21g)' },
+  { name:'Black Beans (cooked)', cat:'Carbs', kcal:132, p:8.9, c:24, f:0.5, sg:172, sl:'1 cup (172g)' },
+  { name:'Lentils (cooked)', cat:'Carbs', kcal:116, p:9, c:20, f:0.4, sg:198, sl:'1 cup (198g)' },
+];
+
+async function searchFood(query) {
+  const status = document.getElementById('calc-status');
+  const results = document.getElementById('calc-results');
+  const q = query.toLowerCase().trim();
+  status.textContent = 'Searching...';
+  results.innerHTML = '';
+
+  // Try server proxy first (full USDA database)
+  try {
+    const res = await fetch(`/api/food-search?q=${encodeURIComponent(query)}`);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.foods && data.foods.length > 0) {
+        status.textContent = `${data.foods.length} results found`;
+        renderCalcResultsUSDA(data.foods);
+        return;
+      }
+    }
+  } catch(e) {
+    // Server unreachable or offline — fall through to local database
+  }
+
+  // Fallback: built-in local database
+  const matches = FOOD_DB_SEARCH.filter(f =>
+    f.name.toLowerCase().includes(q) || f.cat.toLowerCase().includes(q)
+  );
+
+  if (!matches.length) {
+    status.textContent = 'No results found. Try: chicken, rice, eggs, salmon, oats...';
     return;
   }
 
-  container.innerHTML = products.slice(0, 8).map((p, i) => {
-    const name = p.product_name || p.product_name_en || 'Unknown food';
-    const brand = p.brands || '';
-    const servingG = parseFloat(p.serving_quantity) || 100;
-    const servingName = p.serving_size || '100g serving';
-    const hasData = p.nutriments && (p.nutriments['energy-kcal_100g'] || p.nutriments['energy-kcal'] || p.nutriments['energy_100g']);
-    if (!hasData) return '';
+  status.textContent = `${matches.length} result${matches.length > 1 ? 's' : ''} found (offline database)`;
+  renderCalcResults(matches);
+}
 
-    const macros = getMacrosForGrams(p, servingG);
+// Render results from USDA proxy (normalized format)
+function renderCalcResultsUSDA(foods) {
+  const container = document.getElementById('calc-results');
 
+  container.innerHTML = foods.map((f, i) => {
+    const sg = (f.servingSize && f.servingUnit === 'g') ? f.servingSize : 100;
+    const macros = calcMacrosUSDA(f, sg);
+    const label = f.servingSize ? `${f.servingSize}${f.servingUnit}` : '100g';
     return `
       <div class="calc-result-card" id="calc-card-${i}">
-        <div class="calc-result-name">${name}</div>
-        ${brand ? `<div class="calc-result-brand">${brand}</div>` : ''}
+        <div class="calc-result-name">${f.name}</div>
+        <div class="calc-result-brand">${[f.brand, f.category].filter(Boolean).join(' · ')} · per 100g: ${f.kcal} kcal</div>
         <div class="calc-portion-row">
-          <input type="number" id="calc-qty-${i}" value="${servingG}" min="1" max="2000" step="1" inputmode="decimal" />
+          <input type="number" id="calc-qty-${i}" value="${sg}" min="1" max="2000" step="1" inputmode="decimal" />
           <select id="calc-unit-${i}">
             <option value="g" selected>grams</option>
             <option value="oz">oz (28.3g each)</option>
-            <option value="serving" data-grams="${servingG}">serving (${servingName})</option>
+            <option value="serving">serving (${label})</option>
           </select>
         </div>
         <div class="calc-macros" id="calc-macros-${i}">
@@ -1156,25 +1246,108 @@ function renderCalcResults(products) {
       </div>`;
   }).join('');
 
-  // Wire up qty/unit changes to live-update macros
-  products.slice(0, 8).forEach((p, i) => {
-    const hasData = p.nutriments && (p.nutriments['energy-kcal_100g'] || p.nutriments['energy-kcal'] || p.nutriments['energy_100g']);
-    if (!hasData) return;
-
+  foods.forEach((f, i) => {
     const qtyInput = document.getElementById(`calc-qty-${i}`);
     const unitSel = document.getElementById(`calc-unit-${i}`);
     const macrosDiv = document.getElementById(`calc-macros-${i}`);
     if (!qtyInput || !unitSel || !macrosDiv) return;
+    const defaultSG = (f.servingSize && f.servingUnit === 'g') ? f.servingSize : 100;
 
-    const defaultServingG = parseFloat(p.serving_quantity) || 100;
+    function updateMacros() {
+      const qty = parseFloat(qtyInput.value) || 0;
+      const unit = unitSel.value;
+      let grams = unit === 'oz' ? qty * 28.3495 : unit === 'serving' ? qty * defaultSG : qty;
+      const m = calcMacrosUSDA(f, grams);
+      macrosDiv.innerHTML = `
+        <span class="calc-macro-pill pill-kcal">${m.kcal} kcal</span>
+        <span class="calc-macro-pill pill-p">${m.protein}g protein</span>
+        <span class="calc-macro-pill pill-c">${m.carbs}g carbs</span>
+        <span class="calc-macro-pill pill-f">${m.fat}g fat</span>`;
+    }
+    qtyInput.addEventListener('input', updateMacros);
+    unitSel.addEventListener('change', updateMacros);
+
+    const addBtn = container.querySelector(`.calc-add-btn[data-idx="${i}"]`);
+    if (addBtn) {
+      addBtn.addEventListener('click', () => {
+        const qty = parseFloat(qtyInput.value) || 0;
+        const unit = unitSel.value;
+        let grams = unit === 'oz' ? qty * 28.3495 : unit === 'serving' ? qty * defaultSG : qty;
+        const m = calcMacrosUSDA(f, grams);
+        const unitLabel = unit === 'g' ? 'g' : unit === 'oz' ? 'oz' : ' serving(s)';
+        const todayLog = getTodayLog();
+        todayLog.push({ name: f.name, portion: `${qty}${unitLabel}`, kcal: m.kcal, protein: m.protein, carbs: m.carbs, fat: m.fat });
+        calcHistory[todayKey()] = todayLog;
+        saveCalcLog();
+        renderCalcLog();
+        addBtn.textContent = '✓ Added!';
+        addBtn.style.color = 'var(--success)';
+        setTimeout(() => { addBtn.textContent = '+ Add to Log'; addBtn.style.color = ''; }, 1500);
+      });
+    }
+  });
+}
+
+function calcMacrosUSDA(food, grams) {
+  const factor = grams / 100;
+  return {
+    kcal: Math.round(food.kcal * factor),
+    protein: Math.round(food.protein * factor),
+    carbs: Math.round(food.carbs * factor),
+    fat: Math.round(food.fat * factor),
+  };
+}
+
+function calcMacrosForGrams(food, grams) {
+  const factor = grams / 100;
+  return {
+    kcal: Math.round(food.kcal * factor),
+    protein: Math.round(food.p * factor),
+    carbs: Math.round(food.c * factor),
+    fat: Math.round(food.f * factor),
+  };
+}
+
+function renderCalcResults(foods) {
+  const container = document.getElementById('calc-results');
+
+  container.innerHTML = foods.map((f, i) => {
+    const macros = calcMacrosForGrams(f, f.sg);
+    return `
+      <div class="calc-result-card" id="calc-card-${i}">
+        <div class="calc-result-name">${f.name}</div>
+        <div class="calc-result-brand">${f.cat} · per 100g: ${f.kcal} kcal</div>
+        <div class="calc-portion-row">
+          <input type="number" id="calc-qty-${i}" value="${f.sg}" min="1" max="2000" step="1" inputmode="decimal" />
+          <select id="calc-unit-${i}">
+            <option value="g" selected>grams</option>
+            <option value="oz">oz (28.3g each)</option>
+            <option value="serving">serving (${f.sl})</option>
+          </select>
+        </div>
+        <div class="calc-macros" id="calc-macros-${i}">
+          <span class="calc-macro-pill pill-kcal">${macros.kcal} kcal</span>
+          <span class="calc-macro-pill pill-p">${macros.protein}g protein</span>
+          <span class="calc-macro-pill pill-c">${macros.carbs}g carbs</span>
+          <span class="calc-macro-pill pill-f">${macros.fat}g fat</span>
+        </div>
+        <button class="calc-add-btn" data-idx="${i}">+ Add to Log</button>
+      </div>`;
+  }).join('');
+
+  foods.forEach((f, i) => {
+    const qtyInput = document.getElementById(`calc-qty-${i}`);
+    const unitSel = document.getElementById(`calc-unit-${i}`);
+    const macrosDiv = document.getElementById(`calc-macros-${i}`);
+    if (!qtyInput || !unitSel || !macrosDiv) return;
 
     function updateMacros() {
       const qty = parseFloat(qtyInput.value) || 0;
       const unit = unitSel.value;
       let grams = qty;
       if (unit === 'oz') grams = qty * 28.3495;
-      if (unit === 'serving') grams = qty * defaultServingG;
-      const m = getMacrosForGrams(p, grams);
+      if (unit === 'serving') grams = qty * f.sg;
+      const m = calcMacrosForGrams(f, grams);
       macrosDiv.innerHTML = `
         <span class="calc-macro-pill pill-kcal">${m.kcal} kcal</span>
         <span class="calc-macro-pill pill-p">${m.protein}g protein</span>
@@ -1192,12 +1365,11 @@ function renderCalcResults(products) {
         const unit = unitSel.value;
         let grams = qty;
         if (unit === 'oz') grams = qty * 28.3495;
-        if (unit === 'serving') grams = qty * defaultServingG;
-        const m = getMacrosForGrams(p, grams);
-        const unitLabel = unit === 'g' ? 'g' : unit === 'oz' ? 'oz' : 'serving(s)';
-        const name = p.product_name || p.product_name_en || 'Unknown food';
+        if (unit === 'serving') grams = qty * f.sg;
+        const m = calcMacrosForGrams(f, grams);
+        const unitLabel = unit === 'g' ? 'g' : unit === 'oz' ? 'oz' : ' serving(s)';
         const todayLog = getTodayLog();
-        todayLog.push({ name, portion: `${qty}${unitLabel}`, kcal: m.kcal, protein: m.protein, carbs: m.carbs, fat: m.fat });
+        todayLog.push({ name: f.name, portion: `${qty}${unitLabel}`, kcal: m.kcal, protein: m.protein, carbs: m.carbs, fat: m.fat });
         calcHistory[todayKey()] = todayLog;
         saveCalcLog();
         renderCalcLog();
@@ -1209,26 +1381,6 @@ function renderCalcResults(products) {
   });
 }
 
-async function searchFood(query) {
-  const status = document.getElementById('calc-status');
-  const results = document.getElementById('calc-results');
-  status.textContent = 'Searching...';
-  results.innerHTML = '';
-  try {
-    const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=20&fields=product_name,product_name_en,brands,serving_size,serving_quantity,nutriments`;
-    const res = await fetch(url);
-    const data = await res.json();
-    const valid = (data.products || []).filter(p =>
-      (p.product_name || p.product_name_en) &&
-      p.nutriments &&
-      (p.nutriments['energy-kcal_100g'] || p.nutriments['energy-kcal'] || p.nutriments['energy_100g'])
-    );
-    status.textContent = valid.length ? `${valid.length} results found` : 'No results found.';
-    renderCalcResults(valid);
-  } catch(e) {
-    status.textContent = 'Search failed — check your internet connection.';
-  }
-}
 
 function initCalcPage() {
   const input = document.getElementById('calc-search-input');
