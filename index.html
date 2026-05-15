@@ -3,16 +3,16 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-<title>MatEdge — Elite Wrestling Performance</title>
+<title>Built for the Mat — Elite Wrestling Performance</title>
 
 <!-- PWA Meta Tags -->
-<meta name="application-name" content="MatEdge" />
+<meta name="application-name" content="Built for the Mat" />
 <meta name="description" content="Elite wrestling weight and nutrition management." />
 <meta name="theme-color" content="#C9A84C" />
 <meta name="mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-<meta name="apple-mobile-web-app-title" content="MatEdge" />
+<meta name="apple-mobile-web-app-title" content="Built for the Mat" />
 <meta name="msapplication-TileColor" content="#0A0A0B" />
 <meta name="msapplication-TileImage" content="icons/icon-144.png" />
 
@@ -115,7 +115,7 @@
   }
   .header-inner { max-width: 900px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; height: 56px; }
   .logo { display: flex; align-items: baseline; gap: 8px; }
-  .logo-name { font-family: var(--font-display); font-size: 24px; font-weight: 900; letter-spacing: 0.03em; color: var(--gold); }
+  .logo-name { font-family: var(--font-display); font-size: 18px; font-weight: 900; letter-spacing: 0.03em; color: var(--gold); }
   .logo-sub { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); }
   #athlete-name-display { font-size: 13px; color: var(--text-secondary); max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
@@ -328,11 +328,11 @@
 <div id="app">
 
   <!-- Offline indicator -->
-  <div id="offline-bar">⚡ You are offline — MatEdge still works</div>
+  <div id="offline-bar">⚡ You are offline — Built for the Mat still works</div>
 
   <!-- Install prompt banner -->
   <div id="install-banner">
-    <div class="install-text"><strong>Install MatEdge</strong> — add to your home screen for quick access</div>
+    <div class="install-text"><strong>Install Built for the Mat</strong> — add to your home screen for quick access</div>
     <button class="btn-install" id="btn-install">Install</button>
     <button class="btn-dismiss" id="btn-dismiss">✕</button>
   </div>
@@ -340,8 +340,8 @@
   <header>
     <div class="header-inner">
       <div class="logo">
-        <span class="logo-name">MatEdge</span>
-        <span class="logo-sub">Support for Elite Wrestlers</span>
+        <span class="logo-name">Built for the Mat</span>
+        <span class="logo-sub">Elite Wrestling Performance</span>
       </div>
       <span id="athlete-name-display"></span>
     </div>
@@ -532,7 +532,7 @@
     </div>
   </main>
 
-  <footer>MatEdge v0.1 · For illustrative purposes · Always work with a certified sports dietitian</footer>
+  <footer>Built for the Mat v0.1 · For illustrative purposes · Always work with a certified sports dietitian</footer>
 </div>
 
 <script>
@@ -549,22 +549,22 @@ let state = {
 
 function loadState() {
   try {
-    const saved = localStorage.getItem('matedge_state');
+    const saved = localStorage.getItem('bftm_state');
     if (saved) state = JSON.parse(saved);
   } catch(e) {}
 }
 
 function saveState() {
-  try { localStorage.setItem('matedge_state', JSON.stringify(state)); } catch(e) {}
+  try { localStorage.setItem('bftm_state', JSON.stringify(state)); } catch(e) {}
 }
 
 // ---- PWA: Service Worker ----
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js').then(reg => {
-      console.log('[MatEdge] Service worker registered:', reg.scope);
+      console.log('[BFTM] Service worker registered:', reg.scope);
     }).catch(err => {
-      console.warn('[MatEdge] SW registration failed:', err);
+      console.warn('[BFTM] SW registration failed:', err);
     });
   });
 }
@@ -578,7 +578,7 @@ const btnDismiss = document.getElementById('btn-dismiss');
 window.addEventListener('beforeinstallprompt', (e) => {
   e.preventDefault();
   deferredInstallPrompt = e;
-  const dismissed = localStorage.getItem('matedge_install_dismissed');
+  const dismissed = localStorage.getItem('bftm_install_dismissed');
   if (!dismissed) installBanner.classList.add('visible');
 });
 
@@ -592,7 +592,7 @@ btnInstall.addEventListener('click', async () => {
 
 btnDismiss.addEventListener('click', () => {
   installBanner.classList.remove('visible');
-  localStorage.setItem('matedge_install_dismissed', '1');
+  localStorage.setItem('bftm_install_dismissed', '1');
 });
 
 window.addEventListener('appinstalled', () => {
@@ -1037,19 +1037,19 @@ function todayKey() {
 function getTodayLog() { return calcHistory[todayKey()] || []; }
 
 try {
-  const saved = localStorage.getItem('matedge_calchistory');
+  const saved = localStorage.getItem('bftm_calchistory');
   if (saved) calcHistory = JSON.parse(saved);
   // migrate old single-day log if exists
-  const oldLog = localStorage.getItem('matedge_calclog');
+  const oldLog = localStorage.getItem('bftm_calclog');
   if (oldLog) {
     const parsed = JSON.parse(oldLog);
     if (parsed.length) calcHistory[todayKey()] = parsed;
-    localStorage.removeItem('matedge_calclog');
+    localStorage.removeItem('bftm_calclog');
   }
 } catch(e) {}
 
 function saveCalcLog() {
-  try { localStorage.setItem('matedge_calchistory', JSON.stringify(calcHistory)); } catch(e) {}
+  try { localStorage.setItem('bftm_calchistory', JSON.stringify(calcHistory)); } catch(e) {}
 }
 
 function renderCalcLog() {
