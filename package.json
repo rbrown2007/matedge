@@ -1,0 +1,15 @@
+{
+  "name": "matedge",
+  "version": "0.6.0",
+  "description": "Elite wrestling weight and nutrition management",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "keywords": ["wrestling", "nutrition", "weight"],
+  "author": "rbrown2007",
+  "license": "ISC"
+}
