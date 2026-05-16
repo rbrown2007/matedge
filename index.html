@@ -131,7 +131,8 @@
     position: sticky; top: 0; z-index: 100;
   }
   .header-inner { max-width: 900px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; height: 56px; }
-  .logo { display: flex; align-items: center; }
+  .logo { display: flex; align-items: center; flex: 1; }
+  .header-icon { display: flex; align-items: center; flex-shrink: 0; margin-left: 16px; }
   #athlete-name-display { font-size: 13px; color: var(--text-secondary); max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
   nav { background: var(--bg-mid); border-bottom: 1px solid var(--border); padding: 0 20px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
@@ -445,24 +446,28 @@
   <header>
     <div class="header-inner">
       <div class="logo">
-        <svg height="52" viewBox="0 0 340 52" role="img" aria-label="Built for the Mat" xmlns="http://www.w3.org/2000/svg">
+        <svg height="52" viewBox="0 0 230 52" role="img" aria-label="Built for the Mat" xmlns="http://www.w3.org/2000/svg">
           <title>Built for the Mat</title>
           <!-- Wordmark -->
           <rect x="0" y="5" width="4" height="42" rx="2" fill="#C9A84C"/>
           <text x="13" y="20" font-family="'Barlow Condensed', system-ui" font-size="18" font-weight="900" fill="#F0EDE6" letter-spacing="0.04em">BUILT FOR</text>
           <rect x="13" y="23" width="200" height="1" rx="1" fill="#C9A84C" opacity="0.3"/>
           <text x="13" y="38" font-family="'Barlow Condensed', system-ui" font-size="18" font-weight="900" fill="#C9A84C" letter-spacing="0.04em">THE MAT</text>
-          <!-- Athlete name — small line below wordmark -->
+          <!-- Athlete name -->
           <text id="athlete-name-svg" x="13" y="50" font-family="system-ui" font-size="10" fill="#5A5854" letter-spacing="0.08em"></text>
-          <!-- Mat ring icon -->
-          <circle cx="318" cy="26" r="20" fill="none" stroke="#C9A84C" stroke-width="2"/>
-          <circle cx="318" cy="26" r="13" fill="#C9A84C"/>
-          <circle cx="318" cy="15" r="4.5" fill="#0A0A0B"/>
-          <line x1="318" y1="19" x2="310" y2="13" stroke="#0A0A0B" stroke-width="3" stroke-linecap="round"/>
-          <line x1="318" y1="19" x2="326" y2="13" stroke="#0A0A0B" stroke-width="3" stroke-linecap="round"/>
-          <line x1="318" y1="19" x2="318" y2="30" stroke="#0A0A0B" stroke-width="4" stroke-linecap="round"/>
-          <line x1="318" y1="30" x2="311" y2="39" stroke="#0A0A0B" stroke-width="3" stroke-linecap="round"/>
-          <line x1="318" y1="30" x2="325" y2="39" stroke="#0A0A0B" stroke-width="3" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <!-- Victory icon — right side of header -->
+      <div class="header-icon">
+        <svg height="44" viewBox="0 0 44 44" role="img" aria-label="Wrestling mat icon" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="22" cy="22" r="20" fill="none" stroke="#C9A84C" stroke-width="2"/>
+          <circle cx="22" cy="22" r="13" fill="#C9A84C"/>
+          <circle cx="22" cy="11" r="4.5" fill="#0A0A0B"/>
+          <line x1="22" y1="15" x2="14" y2="9" stroke="#0A0A0B" stroke-width="3" stroke-linecap="round"/>
+          <line x1="22" y1="15" x2="30" y2="9" stroke="#0A0A0B" stroke-width="3" stroke-linecap="round"/>
+          <line x1="22" y1="15" x2="22" y2="26" stroke="#0A0A0B" stroke-width="4" stroke-linecap="round"/>
+          <line x1="22" y1="26" x2="15" y2="35" stroke="#0A0A0B" stroke-width="3" stroke-linecap="round"/>
+          <line x1="22" y1="26" x2="29" y2="35" stroke="#0A0A0B" stroke-width="3" stroke-linecap="round"/>
         </svg>
       </div>
     </div>
@@ -1410,6 +1415,48 @@ function renderPlan() {
     // > 21 days out — creatine fully active, no warning
   }
 
+  // ── Electrolytes: phase-aware logic ──────────────────────────────────────
+  // High-sodium electrolytes cause water retention — must be tapered like creatine
+  let electrolyteName = 'Electrolyte Mix';
+  let electrolyteDose = '1 packet';
+  let electrolyteTiming = 'During/after practice';
+  let electrolyteReason = 'Hydration & cramp prevention';
+  let electrolyteActive = anyTraining;
+  let electrolyteWarning = null;
+
+  if (daysToNextComp !== null) {
+    if (daysToNextComp <= 0) {
+      // Weigh-in day — HIGH sodium is now wanted for rapid rehydration
+      electrolyteName = 'High-Sodium Electrolytes';
+      electrolyteDose = '2 packets';
+      electrolyteTiming = 'Immediately post weigh-in';
+      electrolyteReason = 'Rapid rehydration — sodium drives fluid absorption';
+      electrolyteActive = true;
+      electrolyteWarning = { level: 'info', msg: '💧 Post weigh-in: HIGH sodium electrolytes are exactly what you want now. Pedialyte, Liquid IV, or pickle juice (2–3 oz) drive rapid fluid absorption. Start immediately after stepping off the scale.' };
+    } else if (daysToNextComp <= 7) {
+      // Final week — switch to plain water, no electrolyte supplements
+      electrolyteName = 'Plain Water Only';
+      electrolyteDose = '—';
+      electrolyteTiming = 'Avoid electrolyte supplements';
+      electrolyteReason = 'Suspended — high sodium causes water retention in final cut week';
+      electrolyteActive = false;
+      electrolyteWarning = { level: 'danger', msg: `⚠ Electrolyte supplements suspended — ${daysToNextComp}d to weigh-ins. Most packets contain 500–1000mg sodium which can add 0.5–1 lb of water weight. Hydrate with plain water only. If cramping occurs, a small pinch of salt in water is sufficient.` };
+    } else if (daysToNextComp <= 14) {
+      // 2 weeks out — switch to low-sodium alternatives
+      electrolyteName = 'Low-Sodium Electrolytes';
+      electrolyteDose = '1 serving';
+      electrolyteTiming = 'During/after practice — low sodium only';
+      electrolyteReason = 'Hydration without sodium-driven water retention';
+      electrolyteActive = anyTraining;
+      electrolyteWarning = { level: 'warning', msg: `⚡ ${daysToNextComp}d to weigh-ins — switch to LOW-SODIUM options now. Recommended: Nuun Hydration tablets (380mg Na), coconut water (50mg Na/cup), or DIY mix (cream of tartar + tiny pinch salt + lemon + water). Avoid Liquid IV, Gatorade powder, and most commercial packets — they contain 500–1000mg sodium per serving.` };
+    } else if (daysToNextComp <= 21) {
+      // 3 weeks out — advisory to start planning the switch
+      electrolyteReason = 'Hydration & cramp prevention — plan sodium taper soon';
+      electrolyteWarning = { level: 'info', msg: `📅 ${daysToNextComp}d to weigh-ins — begin transitioning to low-sodium electrolytes within the next week. Recommended low-sodium options: Nuun tablets, coconut water, or homemade electrolyte mix.` };
+    }
+    // > 21 days — standard electrolytes fine
+  }
+
   // Women-specific supplement adjustments
   const ironActive = isFemale;
   const ironDose = cyclePhase === 'menstrual' ? '25mg' : '18mg';
@@ -1428,7 +1475,7 @@ function renderPlan() {
   const supps = [
     { name:'Creatine Monohydrate', dose: creatineActive ? creatineDose : '—', timing: creatineTiming, reason: creatineActive ? creatineNote : creatineReason, active: creatineActive, warning: creatineWarning },
     { name:'Whey Protein', dose:`${Math.round(protein*0.3)}g`, timing:'Within 30 min of practice', reason:'Muscle recovery', active: highIntensity, warning: null },
-    { name:'Electrolyte Mix', dose:'1 packet', timing:'During/after practice', reason:'Hydration & cramp prevention', active: anyTraining, warning: null },
+    { name: electrolyteName, dose: electrolyteDose, timing: electrolyteTiming, reason: electrolyteReason, active: electrolyteActive, warning: electrolyteWarning },
     { name:'Magnesium Glycinate', dose: magDose, timing:'Before bed', reason: magReason, active: true, warning: null },
     { name:'Vitamin D3/K2', dose:'5000 IU / 100mcg', timing:'With breakfast', reason: isFemale ? 'Bone density, immunity & hormonal health' : 'Bone density & immunity', active: true, warning: null },
     { name:'Omega-3 Fish Oil', dose:'3g EPA+DHA', timing:'With a meal', reason: isFemale ? 'Joint health, inflammation & hormonal support' : 'Joint health & inflammation', active: true, warning: null },
