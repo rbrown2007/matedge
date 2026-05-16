@@ -419,6 +419,22 @@
   .faq-answer .faq-tip { background: rgba(201,168,76,0.08); border-left: 2px solid var(--gold); padding: 8px 12px; border-radius: 0 4px 4px 0; margin-top: 10px; font-size: 12px; color: var(--gold-light); }
   .faq-version { text-align: center; font-size: 11px; color: var(--text-muted); margin-top: 28px; padding-top: 16px; border-top: 1px solid var(--border); }
 
+  /* Progress macro bars */
+  .prog-macro-row { display: flex; gap: 8px; padding: 5px 0; border-bottom: 1px solid var(--border); align-items: center; }
+  .prog-macro-label { font-size: 11px; color: var(--text-muted); width: 72px; flex-shrink: 0; }
+  .prog-macro-bars { flex: 1; display: flex; flex-direction: column; gap: 3px; }
+  .prog-macro-bar-row { display: flex; align-items: center; gap: 6px; }
+  .prog-macro-name { font-size: 10px; color: var(--text-muted); width: 40px; flex-shrink: 0; text-align: right; }
+  .prog-macro-track { flex: 1; background: var(--bg-elevated); border-radius: 2px; height: 6px; overflow: hidden; }
+  .prog-macro-fill { height: 100%; border-radius: 2px; transition: width 0.4s; }
+  .prog-macro-val { font-size: 10px; color: var(--text-secondary); width: 60px; text-align: right; flex-shrink: 0; }
+  .prog-today-macros { background: var(--bg-surface); border: 1px solid var(--border-accent); border-radius: var(--radius-lg); padding: 14px 16px; margin-bottom: 20px; }
+  .prog-today-macro-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 10px; }
+  .prog-today-macro-card { background: var(--bg-elevated); border-radius: var(--radius); padding: 10px 12px; }
+  .prog-today-macro-label { font-size: 10px; font-weight: 600; letter-spacing: 0.07em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 4px; }
+  .prog-today-macro-val { font-family: var(--font-display); font-size: 20px; font-weight: 700; }
+  .prog-today-macro-target { font-size: 11px; color: var(--text-muted); }
+
   @media (max-width: 600px) {
     .field.half { flex: 1 1 100%; }
     .stat-card { min-width: 0; }
@@ -2704,7 +2720,7 @@ function initCalcPage() {
 // ---- PROGRESS TRACKER ----
 function getDailyTarget(dateStr) {
   const { weight, height, age } = state.profile;
-  if (!weight || !height || !age) return { bmr: 0, tdee: 0, mult: 1.4 };
+  if (!weight || !height || !age) return 0;
   const d = new Date(dateStr + 'T12:00:00');
   const dayIdx = d.getDay();
   const dayName = DAYS[dayIdx === 0 ? 6 : dayIdx - 1];
@@ -2717,6 +2733,16 @@ function getDailyTarget(dateStr) {
   return Math.round(tdee - Math.min(500, cutPerDay * 180));
 }
 
+function getMacroTargets(kcalTarget) {
+  const isFemale = (state.profile.sex || 'male') === 'female';
+  const wt = parseFloat(state.profile.weight) || 0;
+  const proteinPerLb = isFemale ? 0.75 : 0.8;
+  const protein = Math.round(wt * proteinPerLb);
+  const carbs = Math.round(kcalTarget * 0.45 / 4);
+  const fat = Math.round(kcalTarget * 0.25 / 9);
+  return { protein, carbs, fat };
+}
+
 function getLast14Days() {
   const days = [];
   for (let i = 13; i >= 0; i--) {
@@ -2725,6 +2751,9 @@ function getLast14Days() {
     const key = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
     const log = calcHistory[key] || [];
     const logged = log.reduce((s, item) => s + item.kcal, 0);
+    const loggedProtein = log.reduce((s, item) => s + (item.protein || 0), 0);
+    const loggedCarbs = log.reduce((s, item) => s + (item.carbs || 0), 0);
+    const loggedFat = log.reduce((s, item) => s + (item.fat || 0), 0);
     const target = getDailyTarget(key);
     const wEntry = state.weightLog[key] || null;
     const weightAM = wEntry ? (wEntry.am || null) : null;
@@ -2732,7 +2761,7 @@ function getLast14Days() {
     // Use AM as primary (official weight), fall back to PM if no AM
     const weight = weightAM || weightPM || null;
     const label = i === 0 ? 'Today' : i === 1 ? 'Yest.' : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    days.push({ key, label, logged, target, hasData: log.length > 0, weight });
+    days.push({ key, label, logged, target, hasData: log.length > 0, weight, loggedProtein, loggedCarbs, loggedFat });
   }
   return days;
 }
@@ -2840,6 +2869,47 @@ function renderProgress() {
       <div style="font-size:11px;color:var(--text-muted);padding-top:8px;border-top:1px solid var(--border)">
         💡 Weigh yourself immediately after waking (before eating/drinking) for morning weight. Evening weight is typically 2–4 lbs higher — this is normal.
       </div>
+    </div>`;
+
+  // ── Today's Macro Summary ──────────────────────────────────────────────────
+  const todayLog = getTodayLog();
+  const todayKcal = getDailyTarget(todayKey());
+  const macroTargets = getMacroTargets(todayKcal);
+  const loggedTodayKcal = todayLog.reduce((s,i) => s + i.kcal, 0);
+  const loggedTodayProtein = todayLog.reduce((s,i) => s + (i.protein || 0), 0);
+  const loggedTodayCarbs = todayLog.reduce((s,i) => s + (i.carbs || 0), 0);
+  const loggedTodayFat = todayLog.reduce((s,i) => s + (i.fat || 0), 0);
+
+  function macroBar(logged, target, color) {
+    const pct = target > 0 ? Math.min(100, Math.round((logged / target) * 100)) : 0;
+    const overColor = pct > 110 ? 'var(--red-bright)' : color;
+    return `<div class="prog-macro-track"><div class="prog-macro-fill" style="width:${pct}%;background:${overColor}"></div></div>`;
+  }
+
+  const todayMacroHTML = `
+    <div class="prog-today-macros">
+      <div class="progress-section-title" style="margin-bottom:8px">📊 Today's Macro Progress</div>
+      <div class="prog-today-macro-grid">
+        <div class="prog-today-macro-card">
+          <div class="prog-today-macro-label">Protein</div>
+          <div class="prog-today-macro-val" style="color:#4A9C6A">${loggedTodayProtein}<span style="font-size:12px;color:var(--text-muted)">g</span></div>
+          ${macroBar(loggedTodayProtein, macroTargets.protein, '#4A9C6A')}
+          <div class="prog-today-macro-target">${loggedTodayProtein} / ${macroTargets.protein}g target</div>
+        </div>
+        <div class="prog-today-macro-card">
+          <div class="prog-today-macro-label">Carbs</div>
+          <div class="prog-today-macro-val" style="color:var(--gold)">${loggedTodayCarbs}<span style="font-size:12px;color:var(--text-muted)">g</span></div>
+          ${macroBar(loggedTodayCarbs, macroTargets.carbs, 'var(--gold)')}
+          <div class="prog-today-macro-target">${loggedTodayCarbs} / ${macroTargets.carbs}g target</div>
+        </div>
+        <div class="prog-today-macro-card">
+          <div class="prog-today-macro-label">Fat</div>
+          <div class="prog-today-macro-val" style="color:var(--red-bright)">${loggedTodayFat}<span style="font-size:12px;color:var(--text-muted)">g</span></div>
+          ${macroBar(loggedTodayFat, macroTargets.fat, 'var(--red-bright)')}
+          <div class="prog-today-macro-target">${loggedTodayFat} / ${macroTargets.fat}g target</div>
+        </div>
+      </div>
+      ${todayLog.length === 0 ? '<p style="font-size:12px;color:var(--text-muted);margin-top:10px">Log food in the Cal Calc tab to track today\'s macros.</p>' : ''}
     </div>`;
 
   // ── Competition countdown cards ──────────────────────────────────────────
@@ -2953,6 +3023,7 @@ function renderProgress() {
         ${avgTarget ? `<div class="prog-summary-row"><span class="prog-summary-label">Avg daily target</span><span class="prog-summary-val">${avgTarget.toLocaleString()}</span></div>` : ''}
         ${avgTarget ? `<div class="prog-summary-row"><span class="prog-summary-label">Avg vs target</span><span class="prog-summary-val" style="color:${avgKcal > avgTarget + 100 ? 'var(--red-bright)' : avgKcal < avgTarget - 100 ? 'var(--success)' : 'var(--gold)'}">${avgKcal > avgTarget ? '+' : ''}${avgKcal - avgTarget} kcal</span></div>` : ''}
         <div class="prog-summary-row"><span class="prog-summary-label">Days on target (±10%)</span><span class="prog-summary-val" style="color:var(--success)">${onTrack} / ${logged.length}</span></div>
+        ${getWeekMacroRows(w.days)}
       </div>`;
     }).join('')}
   </div>` : '';
@@ -3032,7 +3103,7 @@ function renderProgress() {
     </div>`;
   }
 
-  content.innerHTML = weightEntryHTML + compHTML + weightChartHTML + histHTML + weekHTML;
+  content.innerHTML = todayMacroHTML + weightEntryHTML + compHTML + weightChartHTML + histHTML + weekHTML;
 
   // Wire up AM/PM weight log buttons after render
   function wireWeightBtn(btnId, inputId, period) {
