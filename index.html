@@ -114,9 +114,7 @@
     position: sticky; top: 0; z-index: 100;
   }
   .header-inner { max-width: 900px; margin: 0 auto; display: flex; align-items: center; justify-content: space-between; height: 56px; }
-  .logo { display: flex; align-items: baseline; gap: 8px; }
-  .logo-name { font-family: var(--font-display); font-size: 18px; font-weight: 900; letter-spacing: 0.03em; color: var(--gold); }
-  .logo-sub { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text-muted); }
+  .logo { display: flex; align-items: center; }
   #athlete-name-display { font-size: 13px; color: var(--text-secondary); max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
   nav { background: var(--bg-mid); border-bottom: 1px solid var(--border); padding: 0 20px; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
@@ -238,6 +236,11 @@
   .supp-dose { font-family: var(--font-display); font-weight: 700; color: var(--gold); font-size: 12px; margin-left: 4px; }
   .supp-meta { font-size: 11px; color: var(--text-muted); }
   .supp-disclaimer { font-size: 11px; color: var(--text-muted); margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); }
+  .supp-alert { font-size: 12px; font-weight: 500; padding: 10px 14px; border-radius: var(--radius); margin-bottom: 12px; line-height: 1.5; }
+  .supp-alert-danger { background: rgba(176,48,48,0.15); border: 1px solid rgba(176,48,48,0.4); color: #E88080; }
+  .supp-alert-warning { background: rgba(201,168,76,0.12); border: 1px solid rgba(201,168,76,0.35); color: var(--gold-light); }
+  .supp-alert-info { background: rgba(74,156,106,0.1); border: 1px solid rgba(74,156,106,0.3); color: #7ABFA0; }
+  .supp-item.supp-flagged { border-color: rgba(176,48,48,0.3) !important; }
 
   /* Empty state */
   .empty-state { text-align: center; padding: 60px 20px; }
@@ -264,6 +267,10 @@
   .nutrition-note { font-size: 11px; color: var(--text-muted); margin-top: 20px; padding-top: 12px; border-top: 1px solid var(--border); }
 
   /* Calorie Calculator */
+  .calc-categories { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+  .calc-cat-btn { background: var(--bg-elevated); color: var(--text-secondary); border: 1px solid var(--border); padding: 6px 12px; font-size: 12px; font-family: var(--font-body); font-weight: 500; border-radius: 20px; cursor: pointer; transition: all 0.15s; }
+  .calc-cat-btn:hover, .calc-cat-btn.active { background: var(--bg-surface); color: var(--gold); border-color: var(--gold-dim); }
+  .calc-portion-guide { font-size: 11px; color: var(--text-muted); margin-top: 6px; font-style: italic; }
   .calc-search-wrap { display: flex; gap: 8px; margin-bottom: 12px; }
   .calc-search-wrap input { flex: 1; }
   .calc-search-wrap button { background: var(--gold); color: var(--bg-deep); padding: 8px 18px; font-size: 14px; font-weight: 700; border-radius: var(--radius); flex-shrink: 0; }
@@ -340,8 +347,23 @@
   <header>
     <div class="header-inner">
       <div class="logo">
-        <span class="logo-name">Built for the Mat</span>
-        <span class="logo-sub">Elite Wrestling Performance</span>
+        <svg height="44" viewBox="0 0 340 44" role="img" aria-label="Built for the Mat" xmlns="http://www.w3.org/2000/svg">
+          <title>Built for the Mat</title>
+          <!-- Wordmark -->
+          <rect x="0" y="5" width="4" height="34" rx="2" fill="#C9A84C"/>
+          <text x="13" y="20" font-family="'Barlow Condensed', system-ui" font-size="18" font-weight="900" fill="#F0EDE6" letter-spacing="0.04em">BUILT FOR</text>
+          <rect x="13" y="23" width="200" height="1" rx="1" fill="#C9A84C" opacity="0.3"/>
+          <text x="13" y="40" font-family="'Barlow Condensed', system-ui" font-size="18" font-weight="900" fill="#C9A84C" letter-spacing="0.04em">THE MAT</text>
+          <!-- Mat ring icon — pushed far right -->
+          <circle cx="318" cy="22" r="20" fill="none" stroke="#C9A84C" stroke-width="2"/>
+          <circle cx="318" cy="22" r="13" fill="#C9A84C"/>
+          <circle cx="318" cy="11" r="4.5" fill="#0A0A0B"/>
+          <line x1="318" y1="15" x2="310" y2="9" stroke="#0A0A0B" stroke-width="3" stroke-linecap="round"/>
+          <line x1="318" y1="15" x2="326" y2="9" stroke="#0A0A0B" stroke-width="3" stroke-linecap="round"/>
+          <line x1="318" y1="15" x2="318" y2="26" stroke="#0A0A0B" stroke-width="4" stroke-linecap="round"/>
+          <line x1="318" y1="26" x2="311" y2="35" stroke="#0A0A0B" stroke-width="3" stroke-linecap="round"/>
+          <line x1="318" y1="26" x2="325" y2="35" stroke="#0A0A0B" stroke-width="3" stroke-linecap="round"/>
+        </svg>
       </div>
       <span id="athlete-name-display"></span>
     </div>
@@ -368,6 +390,13 @@
       </div>
       <div class="form-grid">
         <div class="field half"><label>Full Name</label><input id="p-name" type="text" placeholder="e.g. Jordan Burroughs" autocomplete="name" /></div>
+        <div class="field half"><label>Biological Sex</label>
+          <select id="p-sex">
+            <option value="">Select</option>
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+          </select>
+        </div>
         <div class="field half"><label>Wrestling Style</label>
           <select id="p-style">
             <option value="">Select style</option>
@@ -380,6 +409,17 @@
         <div class="field half"><label>Height (inches)</label><input id="p-height" type="number" inputmode="decimal" placeholder="e.g. 70" /></div>
         <div class="field half"><label>Age</label><input id="p-age" type="number" inputmode="numeric" placeholder="years" /></div>
         <div class="field half"><label>Body Fat % (optional)</label><input id="p-bodyfat" type="number" inputmode="decimal" placeholder="e.g. 10" /></div>
+        <div class="field" id="cycle-phase-field" style="display:none">
+          <label>Menstrual Cycle Phase (optional)</label>
+          <select id="p-cyclephase">
+            <option value="">Select current phase</option>
+            <option value="menstrual">Menstrual (Days 1–5) — higher iron needs, fatigue normal</option>
+            <option value="follicular">Follicular (Days 6–14) — peak energy, best for hard training</option>
+            <option value="ovulation">Ovulation (Days 14–16) — peak strength, peak performance</option>
+            <option value="luteal">Luteal (Days 15–28) — higher caloric needs, water retention normal</option>
+          </select>
+          <p style="font-size:11px;color:var(--text-muted);margin-top:5px">Cycle phase adjusts caloric targets, supplement recommendations, and cut strategy guidance.</p>
+        </div>
         <div class="field">
           <label>Target Weight Class</label>
           <select id="p-weightclass">
@@ -431,13 +471,35 @@
               <option value="197">197 lbs</option>
               <option value="285">285 lbs (HWT)</option>
             </optgroup>
-            <optgroup label="Freestyle / Greco-Roman (kg → lbs)">
+            <optgroup label="Men's Freestyle / Greco-Roman (kg → lbs)">
               <option value="125.7">57 kg (125.7 lbs)</option>
               <option value="143.3">65 kg (143.3 lbs)</option>
               <option value="163.1">74 kg (163.1 lbs)</option>
               <option value="189.6">86 kg (189.6 lbs)</option>
               <option value="213.8">97 kg (213.8 lbs)</option>
               <option value="275.6">125 kg (275.6 lbs)</option>
+            </optgroup>
+            <optgroup label="Women's Freestyle (kg → lbs)">
+              <option value="110.2">50 kg (110.2 lbs)</option>
+              <option value="121.3">55 kg (121.3 lbs)</option>
+              <option value="132.3">60 kg (132.3 lbs)</option>
+              <option value="143.3">65 kg (143.3 lbs)</option>
+              <option value="154.3">70 kg (154.3 lbs)</option>
+              <option value="165.3">75 kg (165.3 lbs)</option>
+              <option value="176.4">80 kg (176.4 lbs)</option>
+              <option value="189.6">86 kg (189.6 lbs)</option>
+            </optgroup>
+            <optgroup label="Women's College / WCWA">
+              <option value="101">101 lbs</option>
+              <option value="109">109 lbs</option>
+              <option value="116">116 lbs</option>
+              <option value="123">123 lbs</option>
+              <option value="130">130 lbs</option>
+              <option value="136">136 lbs</option>
+              <option value="143">143 lbs</option>
+              <option value="155">155 lbs</option>
+              <option value="170">170 lbs</option>
+              <option value="191">191 lbs (HWT)</option>
             </optgroup>
             <option value="custom">— Enter custom weight —</option>
           </select>
@@ -506,8 +568,17 @@
       </div>
 
       <div class="calc-search-wrap">
-        <input id="calc-search-input" type="text" placeholder="Search food (e.g. chicken, salmon, rice, eggs, oats...)" autocomplete="off" />
+        <input id="calc-search-input" type="text" placeholder="Search food or browse categories below..." autocomplete="off" />
         <button id="calc-search-btn">Search</button>
+      </div>
+      <div class="calc-categories" id="calc-categories">
+        <button class="calc-cat-btn" data-cat="Protein">🥩 Protein</button>
+        <button class="calc-cat-btn" data-cat="Carbs">🌾 Carbs</button>
+        <button class="calc-cat-btn" data-cat="Vegetables">🥦 Veggies</button>
+        <button class="calc-cat-btn" data-cat="Fats">🥑 Fats</button>
+        <button class="calc-cat-btn" data-cat="Dairy">🥛 Dairy</button>
+        <button class="calc-cat-btn" data-cat="Snacks">⚡ Snacks</button>
+        <button class="calc-cat-btn" data-cat="Recovery">💧 Recovery</button>
       </div>
       <div id="calc-status"></div>
       <div id="calc-results"></div>
@@ -625,7 +696,7 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
 
 // ---- PROFILE ----
 function bindProfile() {
-  const fields = ['name','weight','height','age','bodyFat','style','base','notes'];
+  const fields = ['name','weight','height','age','bodyFat','sex','style','base','notes','cyclephase'];
   fields.forEach(f => {
     const el = document.getElementById('p-' + f);
     if (!el) return;
@@ -650,6 +721,20 @@ function bindProfile() {
   } else if (state.profile.weightClass) {
     wcSelect.value = state.profile.weightClass;
   }
+
+  // Show cycle phase field for female athletes
+  const sexSelect = document.getElementById('p-sex');
+  const cycleField = document.getElementById('cycle-phase-field');
+  function updateCycleVisibility() {
+    cycleField.style.display = sexSelect.value === 'female' ? 'block' : 'none';
+  }
+  sexSelect.addEventListener('change', () => {
+    state.profile.sex = sexSelect.value;
+    saveState();
+    updateCycleVisibility();
+    updateQuickStats();
+  });
+  updateCycleVisibility();
 
   wcSelect.addEventListener('change', () => {
     if (wcSelect.value === 'custom') {
@@ -685,7 +770,10 @@ function updateQuickStats() {
   if (!weight || !height || !age) { box.style.display = 'none'; return; }
   box.style.display = 'block';
   const bmi = (703 * weight / (height ** 2)).toFixed(1);
-  const bmr = Math.round(66 + 6.2 * weight + 12.7 * height - 6.76 * age);
+  const sex = state.profile.sex || 'male';
+  // Mifflin-St Jeor (more accurate, accounts for sex)
+  const bmrBase = (10 * weight * 0.453592) + (6.25 * height * 2.54) - (5 * parseFloat(age));
+  const bmr = Math.round(sex === 'female' ? bmrBase - 161 : bmrBase + 5);
   const cut = weightClass ? Math.max(0, (parseFloat(weight) - parseFloat(weightClass))).toFixed(1) : null;
   let html = `
     <div class="stat-card accent"><div class="stat-label">BMI</div><div class="stat-value accent">${bmi}</div></div>
@@ -813,19 +901,40 @@ function renderPlan() {
 
   subtitle.textContent = `${today} · ${todayTraining}${nextComp ? ` · ${daysToComp}d to ${nextComp.name || 'next comp'}` : ''}`;
 
-  const bmr = 66 + 6.2 * parseFloat(weight) + 12.7 * parseFloat(height) - 6.76 * parseFloat(age);
+  const sex = state.profile.sex || 'male';
+  const isFemale = sex === 'female';
+  const cyclePhase = state.profile.cyclephase || '';
+
+  // Mifflin-St Jeor BMR (sex-accurate)
+  const bmrBase = (10 * parseFloat(weight) * 0.453592) + (6.25 * parseFloat(height) * 2.54) - (5 * parseFloat(age));
+  const bmr = isFemale ? bmrBase - 161 : bmrBase + 5;
+
   const multMap = { 'Rest Day':1.2,'Recovery/Film':1.3,'Light Practice':1.5,'Drilling':1.55,'Cardio':1.65,'Heavy Practice':1.75,'Strength & Conditioning':1.75,'Live Wrestling':1.8 };
   const mult = multMap[todayTraining] || 1.4;
   const tdee = Math.round(bmr * mult);
 
+  // Cycle phase caloric adjustment
+  const cycleCalAdj = (isFemale && cyclePhase === 'luteal') ? 200
+    : (isFemale && cyclePhase === 'menstrual') ? 100 : 0;
+
   const cutPerDay = (daysToComp && nextComp && nextComp.targetWeight)
     ? Math.max(0, (parseFloat(weight) - parseFloat(nextComp.targetWeight)) / Math.max(1, daysToComp))
     : 0;
-  const cals = Math.round(tdee - Math.min(500, cutPerDay * 180));
-  const waterOz = Math.round(parseFloat(weight) * 0.6 + (['Heavy Practice','Live Wrestling'].includes(todayTraining) ? 24 : 0));
-  const protein = Math.round(parseFloat(weight) * 0.8);
-  const carbs = Math.round(cals * 0.45 / 4);
-  const fats = Math.round(cals * 0.25 / 9);
+
+  // Women cut more conservatively — max 300 kcal deficit (vs 500 for men)
+  const maxDeficit = isFemale ? 300 : 500;
+  const cals = Math.round(tdee - Math.min(maxDeficit, cutPerDay * 180) + cycleCalAdj);
+
+  // Women need slightly less protein per lb but more iron-rich foods
+  const proteinPerLb = isFemale ? 0.75 : 0.8;
+  const waterOz = Math.round(parseFloat(weight) * (isFemale ? 0.55 : 0.6) + (['Heavy Practice','Live Wrestling'].includes(todayTraining) ? 20 : 0));
+  const protein = Math.round(parseFloat(weight) * proteinPerLb);
+
+  // Luteal phase: shift more cals to carbs for cravings/energy
+  const carbRatio = (isFemale && cyclePhase === 'luteal') ? 0.50 : 0.45;
+  const fatRatio = (isFemale && cyclePhase === 'luteal') ? 0.22 : 0.25;
+  const carbs = Math.round(cals * carbRatio / 4);
+  const fats = Math.round(cals * fatRatio / 9);
   const proteinCal = protein * 4;
   const carbCal = carbs * 4;
   const fatCal = fats * 9;
@@ -833,14 +942,82 @@ function renderPlan() {
   const highIntensity = ['Heavy Practice','Live Wrestling','Strength & Conditioning'].includes(todayTraining);
   const anyTraining = todayTraining !== 'Rest Day';
 
+  // Cycle phase guidance banner
+  const cycleGuidance = {
+    menstrual:  { color:'var(--red-bright)',  icon:'🩸', msg:'Menstrual phase — prioritize iron-rich foods (red meat, spinach, lentils). Fatigue is normal; ease intensity if needed. +100 kcal added to target.' },
+    follicular: { color:'var(--success)',     icon:'⚡', msg:'Follicular phase — peak energy and carb tolerance. Ideal time for heavy training and aggressive cut if needed.' },
+    ovulation:  { color:'var(--gold)',        icon:'🏆', msg:'Ovulation — peak strength and power. Best window for competition simulation and max effort sessions.' },
+    luteal:     { color:'#C9A84C',            icon:'🌙', msg:'Luteal phase — higher caloric need (+200 kcal added). Water retention is normal, not fat gain. Increase carbs and magnesium. Avoid aggressive cuts this week.' },
+  };
+  const cycleInfo = cyclePhase ? cycleGuidance[cyclePhase] : null;
+
+  // ── Creatine: competition-aware logic ─────────────────────────────────────
+  // Creatine causes 1–3 lbs water retention — must be tapered before weigh-ins
+  const nextCompForCreatine = [...state.competitions]
+    .filter(c => c.date && new Date(c.date) > new Date())
+    .sort((a, b) => new Date(a.date) - new Date(b.date))[0];
+  const daysToNextComp = nextCompForCreatine
+    ? Math.ceil((new Date(nextCompForCreatine.date) - new Date()) / 86400000)
+    : null;
+
+  let creatineActive = true;
+  let creatineWarning = null;
+  let creatineReason = 'Strength & power output';
+  let creatineTiming = 'Post-practice';
+
+  if (daysToNextComp !== null) {
+    if (daysToNextComp <= 0) {
+      // Weigh-in day or past — recommend post weigh-in
+      creatineActive = true;
+      creatineTiming = 'Post weigh-in only';
+      creatineReason = 'Resume for rapid recovery after weigh-ins';
+      creatineWarning = null;
+    } else if (daysToNextComp <= 7) {
+      // Final week — stop creatine entirely
+      creatineActive = false;
+      creatineReason = 'Suspended — final 7 days before weigh-ins';
+      creatineTiming = 'Do not take';
+      creatineWarning = { level: 'danger', msg: `⚠ Creatine suspended — ${daysToNextComp}d to weigh-ins. Stopping now sheds 1–3 lbs of water weight before you step on the scale.` };
+    } else if (daysToNextComp <= 14) {
+      // 2 weeks out — taper warning
+      creatineActive = false;
+      creatineReason = 'Taper phase — stop to shed water retention';
+      creatineTiming = 'Discontinue now';
+      creatineWarning = { level: 'warning', msg: `⚡ ${daysToNextComp}d to weigh-ins — consider stopping creatine now. It takes 1–2 weeks to shed the 1–3 lbs of water it causes.` };
+    } else if (daysToNextComp <= 21) {
+      // 3 weeks out — advisory
+      creatineActive = true;
+      creatineReason = 'Strength & power output — plan to stop in ~1 week';
+      creatineWarning = { level: 'info', msg: `📅 ${daysToNextComp}d to weigh-ins — plan to stop creatine within the next week to allow water weight to shed before competition.` };
+    }
+    // > 21 days out — creatine fully active, no warning
+  }
+
+  // Women-specific supplement adjustments
+  const ironActive = isFemale;
+  const ironDose = cyclePhase === 'menstrual' ? '25mg' : '18mg';
+  const ironWarning = (isFemale && cyclePhase === 'menstrual')
+    ? { level: 'info', msg: '🩸 Menstrual phase — iron needs are highest now. Take with Vitamin C for better absorption. Avoid taking with calcium supplements.' }
+    : null;
+
+  const magDose = (isFemale && cyclePhase === 'luteal') ? '400mg' : '300mg';
+  const magReason = (isFemale && cyclePhase === 'luteal')
+    ? 'Sleep quality, cramp relief & PMS support (luteal phase — increase dose)'
+    : 'Sleep quality & recovery';
+
+  const creatineDose = isFemale ? '3g' : '5g';
+  const creatineNote = isFemale ? 'Lower dose for female athletes' : 'Strength & power output';
+
   const supps = [
-    { name:'Creatine Monohydrate', dose:'5g', timing:'Post-practice', reason:'Strength & power output', active: true },
-    { name:'Whey Protein', dose:`${Math.round(protein*0.3)}g`, timing:'Within 30 min of practice', reason:'Muscle recovery', active: highIntensity },
-    { name:'Electrolyte Mix', dose:'1 packet', timing:'During/after practice', reason:'Hydration & cramp prevention', active: anyTraining },
-    { name:'Magnesium Glycinate', dose:'400mg', timing:'Before bed', reason:'Sleep quality & recovery', active: true },
-    { name:'Vitamin D3/K2', dose:'5000 IU / 100mcg', timing:'With breakfast', reason:'Bone density & immunity', active: true },
-    { name:'Omega-3 Fish Oil', dose:'3g EPA+DHA', timing:'With a meal', reason:'Joint health & inflammation', active: true },
-  ];
+    { name:'Creatine Monohydrate', dose: creatineActive ? creatineDose : '—', timing: creatineTiming, reason: creatineActive ? creatineNote : creatineReason, active: creatineActive, warning: creatineWarning },
+    { name:'Whey Protein', dose:`${Math.round(protein*0.3)}g`, timing:'Within 30 min of practice', reason:'Muscle recovery', active: highIntensity, warning: null },
+    { name:'Electrolyte Mix', dose:'1 packet', timing:'During/after practice', reason:'Hydration & cramp prevention', active: anyTraining, warning: null },
+    { name:'Magnesium Glycinate', dose: magDose, timing:'Before bed', reason: magReason, active: true, warning: null },
+    { name:'Vitamin D3/K2', dose:'5000 IU / 100mcg', timing:'With breakfast', reason: isFemale ? 'Bone density, immunity & hormonal health' : 'Bone density & immunity', active: true, warning: null },
+    { name:'Omega-3 Fish Oil', dose:'3g EPA+DHA', timing:'With a meal', reason: isFemale ? 'Joint health, inflammation & hormonal support' : 'Joint health & inflammation', active: true, warning: null },
+    { name:'Iron (Ferrous Bisglycinate)', dose: ironDose, timing:'With Vitamin C, away from calcium', reason: isFemale ? 'Prevents deficiency common in female athletes' : '', active: ironActive, warning: ironWarning },
+    { name:'Folate (B9)', dose:'400mcg', timing:'With breakfast', reason:'Cell repair, energy & hormonal health', active: isFemale, warning: null },
+  ].filter(s => s.reason !== '');
 
   const pct = (n) => Math.min(100, Math.round((n / cals) * 100));
 
@@ -853,6 +1030,9 @@ function renderPlan() {
   ];
 
   content.innerHTML = `
+    ${cycleInfo ? `<div class="supp-alert" style="background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);color:var(--text-primary);margin-bottom:16px;font-size:13px">
+      <span style="font-size:16px;margin-right:8px">${cycleInfo.icon}</span><strong style="color:${cycleInfo.color}">Cycle Phase Guidance</strong> — ${cycleInfo.msg}
+    </div>` : ''}
     <div class="stat-row">
       <div class="stat-card accent"><div class="stat-label">Calories</div><div class="stat-value accent">${cals.toLocaleString()}<span class="stat-unit">kcal</span></div></div>
       <div class="stat-card"><div class="stat-label">Water</div><div class="stat-value">${waterOz}<span class="stat-unit">fl oz</span></div></div>
@@ -896,10 +1076,13 @@ function renderPlan() {
 
       <div class="plan-card full">
         <div class="plan-card-title">Supplement Stack</div>
+        ${supps.filter(s=>s.warning).map(s=>`
+          <div class="supp-alert supp-alert-${s.warning.level}">${s.warning.msg}</div>
+        `).join('')}
         <div class="supp-grid">
           ${supps.map(s=>`
-            <div class="supp-item ${s.active?'active':'inactive'}">
-              <div class="supp-dot" style="background:${s.active?'var(--success)':'var(--text-muted)'}"></div>
+            <div class="supp-item ${s.active?'active':'inactive'}${s.warning&&!s.active?' supp-flagged':''}">
+              <div class="supp-dot" style="background:${s.warning&&!s.active?'var(--red-bright)':s.active?'var(--success)':'var(--text-muted)'}"></div>
               <div>
                 <div class="supp-name">${s.name}<span class="supp-dose">${s.dose}</span></div>
                 <div class="supp-meta">${s.timing} · ${s.reason}</div>
@@ -907,7 +1090,7 @@ function renderPlan() {
             </div>
           `).join('')}
         </div>
-        <p class="supp-disclaimer">Grayed items not recommended for your current training day. Always consult a certified sports dietitian before starting any supplement protocol.</p>
+        <p class="supp-disclaimer">Supplement recommendations adjust automatically based on days to competition. Always consult a certified sports dietitian before starting any supplement protocol.</p>
       </div>
     </div>
   `;
@@ -1122,62 +1305,112 @@ function getMacrosForGrams(product, grams) {
 // Per-100g values: { kcal, protein, carbs, fat, serving_g, serving_label }
 const FOOD_DB_SEARCH = [
   // Proteins
-  { name:'Chicken Breast (grilled)', cat:'Protein', kcal:165, p:31, c:0, f:3.6, sg:100, sl:'100g' },
-  { name:'Chicken Thigh (grilled)', cat:'Protein', kcal:209, p:26, c:0, f:11, sg:100, sl:'100g' },
-  { name:'Ground Turkey (93% lean)', cat:'Protein', kcal:148, p:21, c:0, f:7, sg:100, sl:'100g' },
-  { name:'Ground Beef (90% lean)', cat:'Protein', kcal:176, p:20, c:0, f:10, sg:100, sl:'100g' },
-  { name:'Sirloin Steak', cat:'Protein', kcal:207, p:26, c:0, f:11, sg:100, sl:'100g' },
-  { name:'Salmon (Atlantic)', cat:'Protein', kcal:208, p:20, c:0, f:13, sg:100, sl:'100g' },
-  { name:'Tuna (canned in water)', cat:'Protein', kcal:86, p:19, c:0, f:0.5, sg:85, sl:'1 can (85g)' },
-  { name:'Shrimp (cooked)', cat:'Protein', kcal:99, p:24, c:0, f:0.3, sg:100, sl:'100g' },
-  { name:'Tilapia (baked)', cat:'Protein', kcal:128, p:26, c:0, f:2.7, sg:100, sl:'100g' },
-  { name:'Pork Tenderloin', cat:'Protein', kcal:143, p:26, c:0, f:3.5, sg:100, sl:'100g' },
-  { name:'Eggs (whole)', cat:'Protein', kcal:155, p:13, c:1.1, f:11, sg:50, sl:'1 large egg (50g)' },
-  { name:'Egg Whites', cat:'Protein', kcal:52, p:11, c:0.7, f:0.2, sg:100, sl:'100g' },
-  { name:'Greek Yogurt (plain, non-fat)', cat:'Protein', kcal:59, p:10, c:3.6, f:0.4, sg:170, sl:'1 container (170g)' },
-  { name:'Cottage Cheese (low-fat)', cat:'Protein', kcal:72, p:12, c:2.7, f:1, sg:113, sl:'½ cup (113g)' },
-  { name:'Whey Protein Powder', cat:'Protein', kcal:120, p:24, c:3, f:1.5, sg:30, sl:'1 scoop (30g)' },
+  { name:'Chicken Breast (grilled)', cat:'Protein', kcal:165, p:31, c:0, f:3.6, sg:100, sl:'100g',
+    measures:[{l:'3 oz (palm size)',g:85},{l:'4 oz',g:113},{l:'6 oz',g:170},{l:'1 cup diced',g:140},{l:'100g',g:100}] },
+  { name:'Chicken Thigh (grilled)', cat:'Protein', kcal:209, p:26, c:0, f:11, sg:100, sl:'100g',
+    measures:[{l:'1 thigh (bone-in)',g:110},{l:'3 oz',g:85},{l:'4 oz',g:113},{l:'100g',g:100}] },
+  { name:'Ground Turkey (93% lean)', cat:'Protein', kcal:148, p:21, c:0, f:7, sg:100, sl:'100g',
+    measures:[{l:'3 oz cooked',g:85},{l:'4 oz cooked',g:113},{l:'½ cup',g:100},{l:'100g',g:100}] },
+  { name:'Ground Beef (90% lean)', cat:'Protein', kcal:176, p:20, c:0, f:10, sg:100, sl:'100g',
+    measures:[{l:'3 oz cooked',g:85},{l:'4 oz cooked',g:113},{l:'½ cup',g:100},{l:'100g',g:100}] },
+  { name:'Sirloin Steak', cat:'Protein', kcal:207, p:26, c:0, f:11, sg:100, sl:'100g',
+    measures:[{l:'3 oz',g:85},{l:'4 oz',g:113},{l:'6 oz',g:170},{l:'8 oz',g:227},{l:'100g',g:100}] },
+  { name:'Salmon (Atlantic)', cat:'Protein', kcal:208, p:20, c:0, f:13, sg:100, sl:'100g',
+    measures:[{l:'3 oz fillet',g:85},{l:'4 oz fillet',g:113},{l:'6 oz fillet',g:170},{l:'100g',g:100}] },
+  { name:'Tuna (canned in water)', cat:'Protein', kcal:86, p:19, c:0, f:0.5, sg:85, sl:'1 can (85g)',
+    measures:[{l:'1 can (3 oz)',g:85},{l:'½ cup',g:90},{l:'1 cup',g:180},{l:'100g',g:100}] },
+  { name:'Shrimp (cooked)', cat:'Protein', kcal:99, p:24, c:0, f:0.3, sg:100, sl:'100g',
+    measures:[{l:'3 oz (6–8 large)',g:85},{l:'4 oz',g:113},{l:'½ cup',g:90},{l:'1 cup',g:180}] },
+  { name:'Tilapia (baked)', cat:'Protein', kcal:128, p:26, c:0, f:2.7, sg:100, sl:'100g',
+    measures:[{l:'1 fillet (4 oz)',g:113},{l:'3 oz',g:85},{l:'6 oz',g:170},{l:'100g',g:100}] },
+  { name:'Pork Tenderloin', cat:'Protein', kcal:143, p:26, c:0, f:3.5, sg:100, sl:'100g',
+    measures:[{l:'3 oz',g:85},{l:'4 oz',g:113},{l:'6 oz',g:170},{l:'100g',g:100}] },
+  { name:'Eggs (whole)', cat:'Protein', kcal:155, p:13, c:1.1, f:11, sg:50, sl:'1 large egg',
+    measures:[{l:'1 egg',g:50},{l:'2 eggs',g:100},{l:'3 eggs',g:150},{l:'4 eggs',g:200}] },
+  { name:'Egg Whites', cat:'Protein', kcal:52, p:11, c:0.7, f:0.2, sg:100, sl:'100g',
+    measures:[{l:'2 egg whites',g:66},{l:'3 egg whites',g:99},{l:'½ cup liquid',g:120},{l:'1 cup liquid',g:240}] },
+  { name:'Greek Yogurt (plain non-fat)', cat:'Protein', kcal:59, p:10, c:3.6, f:0.4, sg:170, sl:'1 container',
+    measures:[{l:'1 container (6 oz)',g:170},{l:'½ cup',g:113},{l:'1 cup',g:227},{l:'2 tbsp',g:30}] },
+  { name:'Cottage Cheese (low-fat)', cat:'Protein', kcal:72, p:12, c:2.7, f:1, sg:113, sl:'½ cup',
+    measures:[{l:'½ cup',g:113},{l:'1 cup',g:226},{l:'¼ cup',g:57},{l:'100g',g:100}] },
+  { name:'Whey Protein Powder', cat:'Protein', kcal:120, p:24, c:3, f:1.5, sg:30, sl:'1 scoop',
+    measures:[{l:'1 scoop (30g)',g:30},{l:'1.5 scoops',g:45},{l:'2 scoops',g:60}] },
   // Carbs
-  { name:'White Rice (cooked)', cat:'Carbs', kcal:130, p:2.7, c:28, f:0.3, sg:186, sl:'1 cup cooked (186g)' },
-  { name:'Brown Rice (cooked)', cat:'Carbs', kcal:216, p:5, c:45, f:1.8, sg:202, sl:'1 cup cooked (202g)' },
-  { name:'Oats (dry)', cat:'Carbs', kcal:389, p:17, c:66, f:7, sg:80, sl:'1 cup dry (80g)' },
-  { name:'Sweet Potato (baked)', cat:'Carbs', kcal:86, p:1.6, c:20, f:0.1, sg:130, sl:'1 medium (130g)' },
-  { name:'White Potato (baked)', cat:'Carbs', kcal:93, p:2.5, c:21, f:0.1, sg:173, sl:'1 medium (173g)' },
-  { name:'Whole Wheat Bread', cat:'Carbs', kcal:247, p:13, c:41, f:4, sg:28, sl:'1 slice (28g)' },
-  { name:'White Bread', cat:'Carbs', kcal:265, p:9, c:49, f:3, sg:28, sl:'1 slice (28g)' },
-  { name:'Banana', cat:'Carbs', kcal:89, p:1.1, c:23, f:0.3, sg:118, sl:'1 medium (118g)' },
-  { name:'Apple', cat:'Carbs', kcal:52, p:0.3, c:14, f:0.2, sg:182, sl:'1 medium (182g)' },
-  { name:'Pasta (cooked)', cat:'Carbs', kcal:131, p:5, c:25, f:1.1, sg:140, sl:'1 cup cooked (140g)' },
-  { name:'Quinoa (cooked)', cat:'Carbs', kcal:120, p:4.4, c:21, f:1.9, sg:185, sl:'1 cup cooked (185g)' },
-  { name:'Tortilla (whole wheat)', cat:'Carbs', kcal:294, p:9, c:47, f:7, sg:45, sl:'1 medium (45g)' },
-  { name:'Rice Cakes', cat:'Carbs', kcal:387, p:8, c:81, f:3, sg:9, sl:'1 cake (9g)' },
-  { name:'Granola', cat:'Carbs', kcal:471, p:10, c:64, f:20, sg:58, sl:'½ cup (58g)' },
+  { name:'White Rice (cooked)', cat:'Carbs', kcal:130, p:2.7, c:28, f:0.3, sg:186, sl:'1 cup cooked',
+    measures:[{l:'½ cup cooked',g:93},{l:'1 cup cooked',g:186},{l:'1.5 cups cooked',g:279},{l:'2 cups cooked',g:372}] },
+  { name:'Brown Rice (cooked)', cat:'Carbs', kcal:216, p:5, c:45, f:1.8, sg:202, sl:'1 cup cooked',
+    measures:[{l:'½ cup cooked',g:101},{l:'1 cup cooked',g:202},{l:'1.5 cups cooked',g:303}] },
+  { name:'Oats (dry)', cat:'Carbs', kcal:389, p:17, c:66, f:7, sg:80, sl:'1 cup dry',
+    measures:[{l:'¼ cup dry',g:20},{l:'½ cup dry',g:40},{l:'1 cup dry',g:80},{l:'¼ cup cooked',g:60}] },
+  { name:'Sweet Potato (baked)', cat:'Carbs', kcal:86, p:1.6, c:20, f:0.1, sg:130, sl:'1 medium',
+    measures:[{l:'1 small',g:90},{l:'1 medium',g:130},{l:'1 large',g:180},{l:'½ cup mashed',g:100}] },
+  { name:'White Potato (baked)', cat:'Carbs', kcal:93, p:2.5, c:21, f:0.1, sg:173, sl:'1 medium',
+    measures:[{l:'1 small',g:120},{l:'1 medium',g:173},{l:'1 large',g:230},{l:'½ cup cubed',g:75}] },
+  { name:'Whole Wheat Bread', cat:'Carbs', kcal:247, p:13, c:41, f:4, sg:28, sl:'1 slice',
+    measures:[{l:'1 slice',g:28},{l:'2 slices',g:56},{l:'1 roll',g:43}] },
+  { name:'Banana', cat:'Carbs', kcal:89, p:1.1, c:23, f:0.3, sg:118, sl:'1 medium',
+    measures:[{l:'1 small',g:90},{l:'1 medium',g:118},{l:'1 large',g:136},{l:'½ cup sliced',g:75}] },
+  { name:'Apple', cat:'Carbs', kcal:52, p:0.3, c:14, f:0.2, sg:182, sl:'1 medium',
+    measures:[{l:'1 small',g:140},{l:'1 medium',g:182},{l:'1 large',g:220}] },
+  { name:'Pasta (cooked)', cat:'Carbs', kcal:131, p:5, c:25, f:1.1, sg:140, sl:'1 cup cooked',
+    measures:[{l:'½ cup cooked',g:70},{l:'1 cup cooked',g:140},{l:'1.5 cups cooked',g:210},{l:'2 cups cooked',g:280}] },
+  { name:'Quinoa (cooked)', cat:'Carbs', kcal:120, p:4.4, c:21, f:1.9, sg:185, sl:'1 cup cooked',
+    measures:[{l:'½ cup cooked',g:93},{l:'1 cup cooked',g:185},{l:'1.5 cups cooked',g:278}] },
+  { name:'Whole Wheat Tortilla', cat:'Carbs', kcal:294, p:9, c:47, f:7, sg:45, sl:'1 medium',
+    measures:[{l:'1 small (6")',g:35},{l:'1 medium (8")',g:45},{l:'1 large (10")',g:72}] },
+  { name:'Rice Cakes', cat:'Carbs', kcal:387, p:8, c:81, f:3, sg:9, sl:'1 cake',
+    measures:[{l:'1 cake',g:9},{l:'2 cakes',g:18},{l:'3 cakes',g:27},{l:'4 cakes',g:36}] },
+  { name:'Black Beans (cooked)', cat:'Carbs', kcal:132, p:8.9, c:24, f:0.5, sg:172, sl:'1 cup',
+    measures:[{l:'¼ cup',g:43},{l:'½ cup',g:86},{l:'1 cup',g:172}] },
+  { name:'Lentils (cooked)', cat:'Carbs', kcal:116, p:9, c:20, f:0.4, sg:198, sl:'1 cup',
+    measures:[{l:'½ cup',g:99},{l:'1 cup',g:198},{l:'¾ cup',g:149}] },
+  { name:'Honey', cat:'Carbs', kcal:304, p:0.3, c:82, f:0, sg:21, sl:'1 tbsp',
+    measures:[{l:'1 tsp',g:7},{l:'1 tbsp',g:21},{l:'2 tbsp',g:42}] },
   // Vegetables
-  { name:'Broccoli (cooked)', cat:'Vegetables', kcal:35, p:2.4, c:7, f:0.4, sg:156, sl:'1 cup (156g)' },
-  { name:'Spinach (raw)', cat:'Vegetables', kcal:23, p:2.9, c:3.6, f:0.4, sg:30, sl:'1 cup (30g)' },
-  { name:'Mixed Greens', cat:'Vegetables', kcal:20, p:1.8, c:3.5, f:0.3, sg:85, sl:'3 cups (85g)' },
-  { name:'Bell Pepper', cat:'Vegetables', kcal:31, p:1, c:6, f:0.3, sg:149, sl:'1 medium (149g)' },
-  { name:'Asparagus', cat:'Vegetables', kcal:20, p:2.2, c:3.7, f:0.1, sg:134, sl:'1 cup (134g)' },
-  { name:'Green Beans', cat:'Vegetables', kcal:31, p:1.8, c:7, f:0.1, sg:125, sl:'1 cup (125g)' },
-  { name:'Zucchini', cat:'Vegetables', kcal:17, p:1.2, c:3.1, f:0.3, sg:124, sl:'1 medium (124g)' },
+  { name:'Broccoli (cooked)', cat:'Vegetables', kcal:35, p:2.4, c:7, f:0.4, sg:156, sl:'1 cup',
+    measures:[{l:'½ cup chopped',g:78},{l:'1 cup chopped',g:156},{l:'1 large floret',g:45}] },
+  { name:'Spinach (raw)', cat:'Vegetables', kcal:23, p:2.9, c:3.6, f:0.4, sg:30, sl:'1 cup',
+    measures:[{l:'1 cup raw',g:30},{l:'2 cups raw',g:60},{l:'½ cup cooked',g:90}] },
+  { name:'Mixed Greens', cat:'Vegetables', kcal:20, p:1.8, c:3.5, f:0.3, sg:85, sl:'3 cups',
+    measures:[{l:'1 cup',g:28},{l:'2 cups',g:56},{l:'3 cups (salad)',g:85}] },
+  { name:'Bell Pepper', cat:'Vegetables', kcal:31, p:1, c:6, f:0.3, sg:149, sl:'1 medium',
+    measures:[{l:'½ pepper',g:75},{l:'1 medium',g:149},{l:'1 cup sliced',g:92}] },
+  { name:'Asparagus', cat:'Vegetables', kcal:20, p:2.2, c:3.7, f:0.1, sg:134, sl:'1 cup',
+    measures:[{l:'4 spears',g:60},{l:'8 spears',g:120},{l:'1 cup',g:134}] },
+  { name:'Green Beans', cat:'Vegetables', kcal:31, p:1.8, c:7, f:0.1, sg:125, sl:'1 cup',
+    measures:[{l:'½ cup',g:63},{l:'1 cup',g:125},{l:'1.5 cups',g:188}] },
+  { name:'Zucchini', cat:'Vegetables', kcal:17, p:1.2, c:3.1, f:0.3, sg:124, sl:'1 medium',
+    measures:[{l:'½ medium',g:62},{l:'1 medium',g:124},{l:'1 cup sliced',g:113}] },
   // Fats
-  { name:'Avocado', cat:'Fats', kcal:160, p:2, c:9, f:15, sg:136, sl:'½ avocado (136g)' },
-  { name:'Peanut Butter', cat:'Fats', kcal:588, p:25, c:20, f:50, sg:32, sl:'2 tbsp (32g)' },
-  { name:'Almond Butter', cat:'Fats', kcal:614, p:21, c:19, f:55, sg:32, sl:'2 tbsp (32g)' },
-  { name:'Mixed Nuts', cat:'Fats', kcal:607, p:14, c:21, f:54, sg:28, sl:'1 oz (28g)' },
-  { name:'Almonds', cat:'Fats', kcal:579, p:21, c:22, f:50, sg:28, sl:'1 oz (28g)' },
-  { name:'Olive Oil', cat:'Fats', kcal:884, p:0, c:0, f:100, sg:14, sl:'1 tbsp (14g)' },
-  { name:'Whole Milk', cat:'Dairy', kcal:61, p:3.2, c:4.8, f:3.3, sg:244, sl:'1 cup (244g)' },
-  { name:'2% Milk', cat:'Dairy', kcal:50, p:3.4, c:4.8, f:2, sg:244, sl:'1 cup (244g)' },
-  { name:'Cheddar Cheese', cat:'Dairy', kcal:403, p:25, c:1.3, f:33, sg:28, sl:'1 oz (28g)' },
-  // Snacks & supplements
-  { name:'Beef Jerky', cat:'Snacks', kcal:410, p:33, c:11, f:26, sg:28, sl:'1 oz (28g)' },
-  { name:'Protein Bar (generic)', cat:'Snacks', kcal:367, p:27, c:40, f:10, sg:60, sl:'1 bar (60g)' },
-  { name:'Chocolate Milk (low-fat)', cat:'Recovery', kcal:63, p:3.2, c:9.9, f:1, sg:244, sl:'1 cup (244g)' },
-  { name:'Gatorade', cat:'Recovery', kcal:26, p:0, c:7, f:0, sg:240, sl:'1 cup (240g)' },
-  { name:'Honey', cat:'Carbs', kcal:304, p:0.3, c:82, f:0, sg:21, sl:'1 tbsp (21g)' },
-  { name:'Black Beans (cooked)', cat:'Carbs', kcal:132, p:8.9, c:24, f:0.5, sg:172, sl:'1 cup (172g)' },
-  { name:'Lentils (cooked)', cat:'Carbs', kcal:116, p:9, c:20, f:0.4, sg:198, sl:'1 cup (198g)' },
+  { name:'Avocado', cat:'Fats', kcal:160, p:2, c:9, f:15, sg:136, sl:'½ avocado',
+    measures:[{l:'2 tbsp mashed',g:30},{l:'¼ avocado',g:50},{l:'½ avocado',g:100},{l:'1 whole',g:200}] },
+  { name:'Peanut Butter', cat:'Fats', kcal:588, p:25, c:20, f:50, sg:32, sl:'2 tbsp',
+    measures:[{l:'1 tsp',g:5},{l:'1 tbsp',g:16},{l:'2 tbsp',g:32},{l:'3 tbsp',g:48}] },
+  { name:'Almond Butter', cat:'Fats', kcal:614, p:21, c:19, f:55, sg:32, sl:'2 tbsp',
+    measures:[{l:'1 tbsp',g:16},{l:'2 tbsp',g:32},{l:'3 tbsp',g:48}] },
+  { name:'Mixed Nuts', cat:'Fats', kcal:607, p:14, c:21, f:54, sg:28, sl:'1 oz (small handful)',
+    measures:[{l:'small handful (1 oz)',g:28},{l:'large handful (1.5 oz)',g:42},{l:'¼ cup',g:35}] },
+  { name:'Almonds', cat:'Fats', kcal:579, p:21, c:22, f:50, sg:28, sl:'1 oz (~23 almonds)',
+    measures:[{l:'10 almonds',g:12},{l:'23 almonds (1 oz)',g:28},{l:'¼ cup',g:35}] },
+  { name:'Olive Oil', cat:'Fats', kcal:884, p:0, c:0, f:100, sg:14, sl:'1 tbsp',
+    measures:[{l:'1 tsp',g:4.5},{l:'1 tbsp',g:14},{l:'2 tbsp',g:27}] },
+  // Dairy
+  { name:'Whole Milk', cat:'Dairy', kcal:61, p:3.2, c:4.8, f:3.3, sg:244, sl:'1 cup',
+    measures:[{l:'½ cup',g:122},{l:'1 cup',g:244},{l:'1.5 cups',g:366}] },
+  { name:'2% Milk', cat:'Dairy', kcal:50, p:3.4, c:4.8, f:2, sg:244, sl:'1 cup',
+    measures:[{l:'½ cup',g:122},{l:'1 cup',g:244},{l:'1.5 cups',g:366}] },
+  { name:'Cheddar Cheese', cat:'Dairy', kcal:403, p:25, c:1.3, f:33, sg:28, sl:'1 oz (1 slice)',
+    measures:[{l:'1 thin slice (1 oz)',g:28},{l:'2 slices',g:56},{l:'¼ cup shredded',g:28}] },
+  // Snacks
+  { name:'Beef Jerky', cat:'Snacks', kcal:410, p:33, c:11, f:26, sg:28, sl:'1 oz',
+    measures:[{l:'1 oz (small pkg)',g:28},{l:'1.5 oz',g:42},{l:'2 oz',g:56}] },
+  { name:'Protein Bar (generic)', cat:'Snacks', kcal:367, p:27, c:40, f:10, sg:60, sl:'1 bar',
+    measures:[{l:'½ bar',g:30},{l:'1 bar',g:60},{l:'1.5 bars',g:90}] },
+  // Recovery
+  { name:'Chocolate Milk (low-fat)', cat:'Recovery', kcal:63, p:3.2, c:9.9, f:1, sg:244, sl:'1 cup',
+    measures:[{l:'1 cup',g:244},{l:'1.5 cups',g:366},{l:'2 cups',g:488}] },
+  { name:'Gatorade', cat:'Recovery', kcal:26, p:0, c:7, f:0, sg:240, sl:'1 cup (8 oz)',
+    measures:[{l:'8 oz (1 cup)',g:240},{l:'12 oz',g:360},{l:'20 oz bottle',g:591},{l:'32 oz',g:960}] },
 ];
 
 async function searchFood(query) {
@@ -1312,41 +1545,52 @@ function renderCalcResults(foods) {
   const container = document.getElementById('calc-results');
 
   container.innerHTML = foods.map((f, i) => {
-    const macros = calcMacrosForGrams(f, f.sg);
+    const defaultMeasure = f.measures ? f.measures[0] : { l: f.sl, g: f.sg };
+    const macros = calcMacrosForGrams(f, defaultMeasure.g);
+    const measureOptions = f.measures
+      ? f.measures.map(m => `<option value="${m.g}">${m.l}</option>`).join('')
+      : `<option value="${f.sg}">${f.sl}</option>`;
     return `
       <div class="calc-result-card" id="calc-card-${i}">
         <div class="calc-result-name">${f.name}</div>
-        <div class="calc-result-brand">${f.cat} · per 100g: ${f.kcal} kcal</div>
+        <div class="calc-result-brand">${f.cat} · per 100g: ${f.kcal} kcal · ${f.p}g protein</div>
         <div class="calc-portion-row">
-          <input type="number" id="calc-qty-${i}" value="${f.sg}" min="1" max="2000" step="1" inputmode="decimal" />
-          <select id="calc-unit-${i}">
-            <option value="g" selected>grams</option>
-            <option value="oz">oz (28.3g each)</option>
-            <option value="serving">serving (${f.sl})</option>
+          <select id="calc-measure-${i}" style="flex:2">
+            ${measureOptions}
+            <option value="custom_g">Custom (grams)</option>
+            <option value="custom_oz">Custom (oz)</option>
           </select>
         </div>
-        <div class="calc-macros" id="calc-macros-${i}">
+        <div id="calc-custom-${i}" style="display:none;margin-top:6px">
+          <input type="number" id="calc-custom-qty-${i}" placeholder="Enter amount" min="1" max="2000" inputmode="decimal" />
+          <p class="calc-portion-guide">1 palm ≈ 3oz protein · 1 fist ≈ 1 cup carbs · 1 thumb ≈ 1 tbsp fat</p>
+        </div>
+        <div class="calc-macros" id="calc-macros-${i}" style="margin-top:10px">
           <span class="calc-macro-pill pill-kcal">${macros.kcal} kcal</span>
           <span class="calc-macro-pill pill-p">${macros.protein}g protein</span>
           <span class="calc-macro-pill pill-c">${macros.carbs}g carbs</span>
           <span class="calc-macro-pill pill-f">${macros.fat}g fat</span>
         </div>
-        <button class="calc-add-btn" data-idx="${i}">+ Add to Log</button>
+        <button class="calc-add-btn" data-idx="${i}" style="margin-top:10px">+ Add to Log</button>
       </div>`;
   }).join('');
 
   foods.forEach((f, i) => {
-    const qtyInput = document.getElementById(`calc-qty-${i}`);
-    const unitSel = document.getElementById(`calc-unit-${i}`);
+    const measureSel = document.getElementById(`calc-measure-${i}`);
+    const customWrap = document.getElementById(`calc-custom-${i}`);
+    const customQty = document.getElementById(`calc-custom-qty-${i}`);
     const macrosDiv = document.getElementById(`calc-macros-${i}`);
-    if (!qtyInput || !unitSel || !macrosDiv) return;
+    if (!measureSel || !macrosDiv) return;
+
+    function getGrams() {
+      const val = measureSel.value;
+      if (val === 'custom_g') return parseFloat(customQty?.value) || 0;
+      if (val === 'custom_oz') return (parseFloat(customQty?.value) || 0) * 28.3495;
+      return parseFloat(val) || f.sg;
+    }
 
     function updateMacros() {
-      const qty = parseFloat(qtyInput.value) || 0;
-      const unit = unitSel.value;
-      let grams = qty;
-      if (unit === 'oz') grams = qty * 28.3495;
-      if (unit === 'serving') grams = qty * f.sg;
+      const grams = getGrams();
       const m = calcMacrosForGrams(f, grams);
       macrosDiv.innerHTML = `
         <span class="calc-macro-pill pill-kcal">${m.kcal} kcal</span>
@@ -1355,21 +1599,24 @@ function renderCalcResults(foods) {
         <span class="calc-macro-pill pill-f">${m.fat}g fat</span>`;
     }
 
-    qtyInput.addEventListener('input', updateMacros);
-    unitSel.addEventListener('change', updateMacros);
+    measureSel.addEventListener('change', () => {
+      const isCustom = measureSel.value.startsWith('custom');
+      customWrap.style.display = isCustom ? 'block' : 'none';
+      if (!isCustom) updateMacros();
+    });
+
+    customQty?.addEventListener('input', updateMacros);
 
     const addBtn = container.querySelector(`.calc-add-btn[data-idx="${i}"]`);
     if (addBtn) {
       addBtn.addEventListener('click', () => {
-        const qty = parseFloat(qtyInput.value) || 0;
-        const unit = unitSel.value;
-        let grams = qty;
-        if (unit === 'oz') grams = qty * 28.3495;
-        if (unit === 'serving') grams = qty * f.sg;
+        const grams = getGrams();
+        if (!grams) return;
         const m = calcMacrosForGrams(f, grams);
-        const unitLabel = unit === 'g' ? 'g' : unit === 'oz' ? 'oz' : ' serving(s)';
+        const selectedOption = measureSel.options[measureSel.selectedIndex];
+        const portionLabel = selectedOption.text;
         const todayLog = getTodayLog();
-        todayLog.push({ name: f.name, portion: `${qty}${unitLabel}`, kcal: m.kcal, protein: m.protein, carbs: m.carbs, fat: m.fat });
+        todayLog.push({ name: f.name, portion: portionLabel, kcal: m.kcal, protein: m.protein, carbs: m.carbs, fat: m.fat });
         calcHistory[todayKey()] = todayLog;
         saveCalcLog();
         renderCalcLog();
@@ -1400,6 +1647,19 @@ function initCalcPage() {
     calcHistory[todayKey()] = [];
     saveCalcLog();
     renderCalcLog();
+  });
+
+  // Category browse buttons
+  document.querySelectorAll('.calc-cat-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.calc-cat-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const cat = btn.dataset.cat;
+      const matches = FOOD_DB_SEARCH.filter(f => f.cat === cat);
+      document.getElementById('calc-status').textContent = `${matches.length} ${cat} options`;
+      input.value = '';
+      renderCalcResults(matches);
+    });
   });
 
   renderCalcLog();

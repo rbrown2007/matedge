@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * MatEdge Local Server
+ * Built for the Mat Local Server
  * Run: node server.js
  * Then open: http://localhost:3000
  */
@@ -128,7 +128,7 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, '0.0.0.0', () => {
-  console.log('\n  ⚡ MatEdge is running!\n');
+  console.log('\n  ⚡ Built for the Mat is running!\n');
   console.log(`  Local:   http://localhost:${PORT}`);
   console.log(`  Network: http://${getLocalIP()}:${PORT}  <- use this on your phone\n`);
   console.log('  Food search: USDA FoodData Central (600,000+ foods)');

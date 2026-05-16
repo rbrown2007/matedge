@@ -1,5 +1,5 @@
 const CACHE_VERSION = 2;
-const CACHE_NAME = `matedge-v${CACHE_VERSION}`;
+const CACHE_NAME = `bftm-v${CACHE_VERSION}`;
 const ASSETS = [
   '/',
   '/index.html',
@@ -23,7 +23,7 @@ self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
       Promise.all(keys.filter(k => k !== CACHE_NAME).map(k => {
-        console.log('[MatEdge SW] Deleting old cache:', k);
+        console.log('[BFTM SW] Deleting old cache:', k);
         return caches.delete(k);
       }))
     ).then(() => self.clients.claim())
