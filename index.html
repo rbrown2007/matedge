@@ -23,6 +23,40 @@
 <link rel="apple-touch-icon" href="icons/icon-152.png" />
 <link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192.png" />
 
+<!-- Firebase SDK v12.13.0 -->
+<script type="module">
+  import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js';
+  import { getAuth, onAuthStateChanged, signInWithEmailAndPassword,
+           createUserWithEmailAndPassword, GoogleAuthProvider,
+           signInWithPopup, signOut, sendPasswordResetEmail }
+    from 'https://www.gstatic.com/firebasejs/12.13.0/firebase-auth.js';
+  import { getFirestore, doc, getDoc, setDoc, deleteDoc,
+           collection, getDocs, writeBatch }
+    from 'https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js';
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyAJOsWJVuSoN5ZfDM0aiwsACIQip8-4w_c",
+    authDomain: "built-for-the-mat.firebaseapp.com",
+    projectId: "built-for-the-mat",
+    storageBucket: "built-for-the-mat.firebasestorage.app",
+    messagingSenderId: "628223312574",
+    appId: "1:628223312574:web:883b3c20a9bde0767294ef",
+    measurementId: "G-ZX5RRYJ9XK"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const googleProvider = new GoogleAuthProvider();
+
+  // Expose to global scope for use in main script
+  window._firebase = { auth, db, googleProvider,
+    signInWithEmailAndPassword, createUserWithEmailAndPassword,
+    signInWithPopup, signOut, sendPasswordResetEmail,
+    onAuthStateChanged, doc, getDoc, setDoc, deleteDoc,
+    collection, getDocs, writeBatch };
+</script>
+
 <!-- Fonts -->
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;900&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet" />
@@ -435,6 +469,47 @@
   .prog-today-macro-val { font-family: var(--font-display); font-size: 20px; font-weight: 700; }
   .prog-today-macro-target { font-size: 11px; color: var(--text-muted); }
 
+  /* ── Auth Modal ─────────────────────────────────── */
+  .auth-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); }
+  .auth-overlay.hidden { display: none; }
+  .auth-modal { background: var(--bg-surface); border: 1px solid var(--border-accent); border-radius: var(--radius-lg); padding: 32px 28px; width: 100%; max-width: 400px; position: relative; }
+  .auth-logo { font-family: var(--font-display); font-size: 20px; font-weight: 900; color: var(--gold); letter-spacing: 0.04em; margin-bottom: 6px; }
+  .auth-logo span { color: var(--text-primary); }
+  .auth-title { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  .auth-sub { font-size: 13px; color: var(--text-muted); margin-bottom: 24px; }
+  .auth-field { margin-bottom: 14px; }
+  .auth-field label { display: block; font-size: 12px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--text-muted); margin-bottom: 6px; }
+  .auth-field input { width: 100%; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 14px; color: var(--text-primary); font-size: 15px; }
+  .auth-field input:focus { border-color: var(--gold-dim); outline: none; }
+  .auth-btn { width: 100%; padding: 12px; border-radius: var(--radius); font-size: 15px; font-weight: 700; cursor: pointer; border: none; margin-bottom: 10px; transition: opacity 0.15s; }
+  .auth-btn:hover { opacity: 0.9; }
+  .auth-btn-primary { background: var(--gold); color: var(--bg-deep); }
+  .auth-btn-google { background: var(--bg-elevated); color: var(--text-primary); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; gap: 10px; }
+  .auth-btn-google svg { width: 18px; height: 18px; flex-shrink: 0; }
+  .auth-divider { display: flex; align-items: center; gap: 10px; margin: 14px 0; color: var(--text-muted); font-size: 12px; }
+  .auth-divider::before, .auth-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+  .auth-switch { text-align: center; font-size: 13px; color: var(--text-muted); margin-top: 14px; }
+  .auth-switch button { background: none; border: none; color: var(--gold); cursor: pointer; font-size: 13px; text-decoration: underline; }
+  .auth-skip { text-align: center; margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
+  .auth-skip button { background: none; border: none; color: var(--text-muted); font-size: 12px; cursor: pointer; }
+  .auth-skip button:hover { color: var(--text-secondary); }
+  .auth-error { background: rgba(217,64,64,0.12); border: 1px solid rgba(217,64,64,0.3); border-radius: var(--radius); padding: 10px 14px; font-size: 13px; color: #E88080; margin-bottom: 14px; display: none; }
+  .auth-error.show { display: block; }
+  .auth-success { background: rgba(74,156,106,0.12); border: 1px solid rgba(74,156,106,0.3); border-radius: var(--radius); padding: 10px 14px; font-size: 13px; color: #7ABFA0; margin-bottom: 14px; display: none; }
+  .auth-success.show { display: block; }
+  /* Account header badge */
+  .account-badge { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-muted); cursor: pointer; }
+  .account-badge .acct-avatar { width: 28px; height: 28px; border-radius: 50%; background: var(--gold); color: var(--bg-deep); font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .account-badge .acct-name { max-width: 100px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .account-menu { position: absolute; right: 16px; top: 60px; background: var(--bg-surface); border: 1px solid var(--border-accent); border-radius: var(--radius-lg); padding: 8px; z-index: 100; box-shadow: 0 8px 24px rgba(0,0,0,0.4); min-width: 180px; display: none; }
+  .account-menu.open { display: block; }
+  .account-menu-item { padding: 10px 14px; font-size: 14px; color: var(--text-secondary); cursor: pointer; border-radius: var(--radius); display: flex; align-items: center; gap: 10px; }
+  .account-menu-item:hover { background: var(--bg-elevated); color: var(--text-primary); }
+  .sync-banner { background: rgba(201,168,76,0.08); border-bottom: 1px solid rgba(201,168,76,0.2); padding: 8px 16px; font-size: 12px; color: var(--gold); display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .sync-banner button { background: var(--gold); color: var(--bg-deep); border: none; border-radius: var(--radius); padding: 4px 12px; font-size: 12px; font-weight: 700; cursor: pointer; flex-shrink: 0; }
+  .sync-banner.hidden { display: none; }
+  .sync-status { font-size: 11px; color: var(--text-muted); text-align: center; padding: 4px; }
+
   @media (max-width: 600px) {
     .field.half { flex: 1 1 100%; }
     .stat-card { min-width: 0; }
@@ -467,6 +542,72 @@
     <button class="btn-dismiss" id="btn-dismiss">✕</button>
   </div>
 
+  <!-- Auth Modal -->
+  <div class="auth-overlay hidden" id="auth-overlay">
+    <div class="auth-modal">
+      <div class="auth-logo">BUILT FOR <span>THE MAT</span></div>
+      <div id="auth-title" class="auth-title">Sign In</div>
+      <div id="auth-sub" class="auth-sub">Sync your data across all your devices.</div>
+      <div class="auth-error" id="auth-error"></div>
+      <div class="auth-success" id="auth-success"></div>
+
+      <div id="auth-form-fields">
+        <div class="auth-field">
+          <label>Email</label>
+          <input type="email" id="auth-email" placeholder="you@email.com" autocomplete="email">
+        </div>
+        <div class="auth-field" id="auth-name-field" style="display:none">
+          <label>Your Name</label>
+          <input type="text" id="auth-name" placeholder="First name" autocomplete="given-name">
+        </div>
+        <div class="auth-field">
+          <label>Password</label>
+          <input type="password" id="auth-password" placeholder="••••••••" autocomplete="current-password">
+        </div>
+        <div id="auth-reset-link" style="text-align:right;margin-top:-8px;margin-bottom:12px;display:none">
+          <button onclick="showResetForm()" style="background:none;border:none;color:var(--text-muted);font-size:12px;cursor:pointer">Forgot password?</button>
+        </div>
+      </div>
+
+      <div id="auth-reset-form" style="display:none">
+        <div class="auth-field">
+          <label>Email</label>
+          <input type="email" id="auth-reset-email" placeholder="you@email.com">
+        </div>
+        <button class="auth-btn auth-btn-primary" onclick="sendReset()">Send Reset Email</button>
+        <div class="auth-switch"><button onclick="showLogin()">← Back to Sign In</button></div>
+      </div>
+
+      <button class="auth-btn auth-btn-primary" id="auth-submit-btn" onclick="handleAuthSubmit()">Sign In</button>
+
+      <div class="auth-divider">or</div>
+      <button class="auth-btn auth-btn-google" onclick="handleGoogleSignIn()">
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+        </svg>
+        Continue with Google
+      </button>
+
+      <div class="auth-skip">
+        <button onclick="skipAuth()">Continue without account — data stays on this device only</button>
+      </div>
+
+      <div class="auth-switch" id="auth-switch-text">
+        Don't have an account? <button onclick="showRegister()">Create one free</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Account dropdown menu -->
+  <div class="account-menu" id="account-menu">
+    <div class="account-menu-item" onclick="showAuthModal('account')">👤 Account Settings</div>
+    <div class="account-menu-item" onclick="exportData()">⬇ Export My Data</div>
+    <div class="account-menu-item" onclick="handleSignOut()" style="color:var(--red-bright)">← Sign Out</div>
+  </div>
+
   <header>
     <div class="header-inner">
       <div class="logo">
@@ -480,6 +621,14 @@
           <!-- Athlete name -->
           <text id="athlete-name-svg" x="13" y="50" font-family="system-ui" font-size="10" fill="#5A5854" letter-spacing="0.08em"></text>
         </svg>
+      </div>
+      <!-- Account badge -->
+      <div id="account-badge-area" style="display:flex;align-items:center;gap:12px">
+        <div id="account-badge" class="account-badge" onclick="toggleAccountMenu()" style="display:none">
+          <div class="acct-avatar" id="acct-avatar">?</div>
+          <span class="acct-name" id="acct-name"></span>
+        </div>
+        <button id="signin-header-btn" onclick="showAuthModal()" class="btn-log-weight" style="font-size:12px;padding:6px 14px;display:none">Sign In</button>
       </div>
       <!-- Victory icon — right side of header -->
       <div class="header-icon">
@@ -4033,6 +4182,303 @@ function importData(event) {
   // Reset file input so same file can be re-imported
   event.target.value = '';
 }
+
+// ---- FIREBASE AUTH & SYNC ----
+
+let currentUser = null;
+let fb = null; // Firebase references, set after SDK loads
+
+// Wait for Firebase module to be ready
+function waitForFirebase(cb) {
+  if (window._firebase) { fb = window._firebase; cb(); return; }
+  let attempts = 0;
+  const interval = setInterval(() => {
+    attempts++;
+    if (window._firebase) { clearInterval(interval); fb = window._firebase; cb(); }
+    if (attempts > 20) { clearInterval(interval); console.warn('[BFTM] Firebase not loaded'); cb(); }
+  }, 200);
+}
+
+// ── Auth UI ────────────────────────────────────────────────────────
+let authMode = 'login'; // 'login' | 'register'
+
+function showAuthModal(mode) {
+  document.getElementById('auth-overlay').classList.remove('hidden');
+  if (mode === 'register') showRegister();
+  else showLogin();
+}
+
+function hideAuthModal() {
+  document.getElementById('auth-overlay').classList.add('hidden');
+  clearAuthMessages();
+}
+
+function showLogin() {
+  authMode = 'login';
+  document.getElementById('auth-title').textContent = 'Sign In';
+  document.getElementById('auth-sub').textContent = 'Sync your data across all your devices.';
+  document.getElementById('auth-submit-btn').textContent = 'Sign In';
+  document.getElementById('auth-name-field').style.display = 'none';
+  document.getElementById('auth-reset-link').style.display = 'block';
+  document.getElementById('auth-form-fields').style.display = 'block';
+  document.getElementById('auth-reset-form').style.display = 'none';
+  document.getElementById('auth-submit-btn').style.display = 'block';
+  document.getElementById('auth-switch-text').innerHTML = "Don\'t have an account? <button onclick=\"showRegister()\">Create one free</button>";
+  clearAuthMessages();
+}
+
+function showRegister() {
+  authMode = 'register';
+  document.getElementById('auth-title').textContent = 'Create Account';
+  document.getElementById('auth-sub').textContent = 'Free forever. Your data syncs across devices.';
+  document.getElementById('auth-submit-btn').textContent = 'Create Account';
+  document.getElementById('auth-name-field').style.display = 'block';
+  document.getElementById('auth-reset-link').style.display = 'none';
+  document.getElementById('auth-form-fields').style.display = 'block';
+  document.getElementById('auth-reset-form').style.display = 'none';
+  document.getElementById('auth-submit-btn').style.display = 'block';
+  document.getElementById('auth-switch-text').innerHTML = 'Already have an account? <button onclick="showLogin()">Sign in</button>';
+  clearAuthMessages();
+}
+
+function showResetForm() {
+  document.getElementById('auth-form-fields').style.display = 'none';
+  document.getElementById('auth-submit-btn').style.display = 'none';
+  document.getElementById('auth-reset-form').style.display = 'block';
+  document.getElementById('auth-switch-text').innerHTML = '';
+  clearAuthMessages();
+}
+
+function skipAuth() {
+  hideAuthModal();
+  document.getElementById('sync-banner').classList.remove('hidden');
+  document.getElementById('signin-header-btn').style.display = 'block';
+}
+
+function showAuthError(msg) {
+  const el = document.getElementById('auth-error');
+  el.textContent = msg;
+  el.classList.add('show');
+}
+
+function showAuthSuccess(msg) {
+  const el = document.getElementById('auth-success');
+  el.textContent = msg;
+  el.classList.add('show');
+}
+
+function clearAuthMessages() {
+  document.getElementById('auth-error').classList.remove('show');
+  document.getElementById('auth-success').classList.remove('show');
+}
+
+function toggleAccountMenu() {
+  document.getElementById('account-menu').classList.toggle('open');
+}
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('#account-badge') && !e.target.closest('#account-menu')) {
+    document.getElementById('account-menu').classList.remove('open');
+  }
+});
+
+// ── Auth Actions ─────────────────────────────────────────────────
+async function handleAuthSubmit() {
+  if (!fb) return showAuthError('Firebase not loaded. Please refresh.');
+  const email = document.getElementById('auth-email').value.trim();
+  const password = document.getElementById('auth-password').value;
+  const name = document.getElementById('auth-name').value.trim();
+  clearAuthMessages();
+
+  if (!email || !password) return showAuthError('Please enter email and password.');
+  if (authMode === 'register' && password.length < 6) return showAuthError('Password must be at least 6 characters.');
+
+  const btn = document.getElementById('auth-submit-btn');
+  btn.textContent = authMode === 'login' ? 'Signing in...' : 'Creating account...';
+  btn.disabled = true;
+
+  try {
+    if (authMode === 'register') {
+      const cred = await fb.createUserWithEmailAndPassword(fb.auth, email, password);
+      // Save name to profile if provided
+      if (name && !state.profile.name) {
+        state.profile.name = name;
+      }
+      await onUserSignedIn(cred.user);
+    } else {
+      const cred = await fb.signInWithEmailAndPassword(fb.auth, email, password);
+      await onUserSignedIn(cred.user);
+    }
+    hideAuthModal();
+  } catch(e) {
+    const msgs = {
+      'auth/user-not-found': 'No account found with that email.',
+      'auth/wrong-password': 'Incorrect password.',
+      'auth/email-already-in-use': 'An account with that email already exists.',
+      'auth/invalid-email': 'Please enter a valid email address.',
+      'auth/weak-password': 'Password must be at least 6 characters.',
+      'auth/too-many-requests': 'Too many attempts. Please try again later.',
+      'auth/invalid-credential': 'Incorrect email or password.',
+    };
+    showAuthError(msgs[e.code] || e.message);
+  } finally {
+    btn.textContent = authMode === 'login' ? 'Sign In' : 'Create Account';
+    btn.disabled = false;
+  }
+}
+
+async function handleGoogleSignIn() {
+  if (!fb) return showAuthError('Firebase not loaded. Please refresh.');
+  clearAuthMessages();
+  try {
+    const cred = await fb.signInWithPopup(fb.auth, fb.googleProvider);
+    await onUserSignedIn(cred.user);
+    hideAuthModal();
+  } catch(e) {
+    if (e.code !== 'auth/popup-closed-by-user') {
+      showAuthError('Google sign-in failed. Please try again.');
+    }
+  }
+}
+
+async function sendReset() {
+  if (!fb) return;
+  const email = document.getElementById('auth-reset-email').value.trim();
+  if (!email) return showAuthError('Please enter your email address.');
+  try {
+    await fb.sendPasswordResetEmail(fb.auth, email);
+    showAuthSuccess('Reset email sent! Check your inbox.');
+  } catch(e) {
+    showAuthError('Could not send reset email. Check the address and try again.');
+  }
+}
+
+async function handleSignOut() {
+  if (!fb) return;
+  document.getElementById('account-menu').classList.remove('open');
+  await fb.signOut(fb.auth);
+}
+
+// ── Firestore Sync ────────────────────────────────────────────────
+function setSyncStatus(msg, color) {
+  const el = document.getElementById('sync-status');
+  if (!msg) { el.style.display = 'none'; return; }
+  el.style.display = 'block';
+  el.style.color = color || 'var(--text-muted)';
+  el.textContent = msg;
+  if (color === 'var(--success)') setTimeout(() => setSyncStatus(null), 3000);
+}
+
+async function saveToFirestore() {
+  if (!currentUser || !fb) return;
+  try {
+    const uid = currentUser.uid;
+    const batch = fb.writeBatch(fb.db);
+    batch.set(fb.doc(fb.db, 'users', uid, 'data', 'profile'), state.profile);
+    batch.set(fb.doc(fb.db, 'users', uid, 'data', 'schedule'), state.schedule);
+    batch.set(fb.doc(fb.db, 'users', uid, 'data', 'weightLog'), state.weightLog || {});
+    batch.set(fb.doc(fb.db, 'users', uid, 'data', 'competitions'), { list: state.competitions || [] });
+    batch.set(fb.doc(fb.db, 'users', uid, 'data', 'calcHistory'), calcHistory || {});
+    await batch.commit();
+    setSyncStatus('✓ Synced', 'var(--success)');
+  } catch(e) {
+    console.warn('[BFTM] Firestore save failed:', e.message);
+    setSyncStatus('Sync failed — saved locally', 'var(--text-muted)');
+  }
+}
+
+async function loadFromFirestore(user) {
+  if (!fb) return false;
+  try {
+    const uid = user.uid;
+    const [profileSnap, scheduleSnap, weightSnap, compSnap, histSnap] = await Promise.all([
+      fb.getDoc(fb.doc(fb.db, 'users', uid, 'data', 'profile')),
+      fb.getDoc(fb.doc(fb.db, 'users', uid, 'data', 'schedule')),
+      fb.getDoc(fb.doc(fb.db, 'users', uid, 'data', 'weightLog')),
+      fb.getDoc(fb.doc(fb.db, 'users', uid, 'data', 'competitions')),
+      fb.getDoc(fb.doc(fb.db, 'users', uid, 'data', 'calcHistory')),
+    ]);
+    if (profileSnap.exists()) state.profile = { ...state.profile, ...profileSnap.data() };
+    if (scheduleSnap.exists()) state.schedule = scheduleSnap.data();
+    if (weightSnap.exists()) state.weightLog = weightSnap.data();
+    if (compSnap.exists()) state.competitions = compSnap.data().list || [];
+    if (histSnap.exists()) calcHistory = histSnap.data();
+    return true;
+  } catch(e) {
+    console.warn('[BFTM] Firestore load failed:', e.message);
+    return false;
+  }
+}
+
+async function migrateLocalDataToFirestore(user) {
+  // If user has local data and no cloud data yet, migrate it up
+  const profileSnap = await fb.getDoc(fb.doc(fb.db, 'users', user.uid, 'data', 'profile'));
+  if (!profileSnap.exists() && state.profile.name) {
+    setSyncStatus('Uploading your existing data to the cloud...');
+    await saveToFirestore();
+    setSyncStatus('✓ Data uploaded to cloud', 'var(--success)');
+  }
+}
+
+async function onUserSignedIn(user) {
+  currentUser = user;
+  setSyncStatus('Loading your data...');
+  const hadCloudData = await loadFromFirestore(user);
+  if (!hadCloudData) await migrateLocalDataToFirestore(user);
+  saveState();
+  updateAccountUI(user);
+  rerenderAll();
+  setSyncStatus('✓ Synced', 'var(--success)');
+}
+
+function updateAccountUI(user) {
+  const badge = document.getElementById('account-badge');
+  const avatar = document.getElementById('acct-avatar');
+  const name = document.getElementById('acct-name');
+  const syncBanner = document.getElementById('sync-banner');
+  const signinBtn = document.getElementById('signin-header-btn');
+
+  if (user) {
+    badge.style.display = 'flex';
+    signinBtn.style.display = 'none';
+    syncBanner.classList.add('hidden');
+    const displayName = user.displayName || state.profile.name || user.email.split('@')[0];
+    avatar.textContent = displayName.charAt(0).toUpperCase();
+    name.textContent = displayName;
+  } else {
+    badge.style.display = 'none';
+    signinBtn.style.display = 'block';
+    syncBanner.classList.remove('hidden');
+  }
+}
+
+function rerenderAll() {
+  bindProfile();
+  renderTraining();
+  renderCompetitions();
+  renderNutrition();
+  initCalcPage();
+  renderProgress();
+  renderWeighIn();
+  renderFAQ();
+  updateAthleteDisplay();
+}
+
+// ── Override saveState to also sync to Firestore ─────────────────
+const _originalSaveState = saveState;
+function saveState() {
+  // Sanitize profile numbers before saving
+  const p = state.profile;
+  if (p.weight && (parseFloat(p.weight) < 50 || parseFloat(p.weight) > 400)) p.weight = '';
+  if (p.height && (parseFloat(p.height) < 48 || parseFloat(p.height) > 96)) p.height = '';
+  if (p.age    && (parseFloat(p.age) < 10    || parseFloat(p.age) > 80))    p.age = '';
+  if (p.bodyFat && (parseFloat(p.bodyFat) < 3 || parseFloat(p.bodyFat) > 40)) p.bodyFat = '';
+  try { localStorage.setItem('bftm_state', JSON.stringify(state)); } catch(e) {}
+  // Debounced Firestore sync — wait 2s after last change before writing
+  clearTimeout(saveState._debounce);
+  saveState._debounce = setTimeout(() => saveToFirestore(), 2000);
+}
+saveState._debounce = null;
 
 // ---- INIT ----
 loadState();
