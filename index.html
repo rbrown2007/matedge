@@ -855,8 +855,6 @@ function bindProfile() {
 
   // Update weight class hint based on style selected
   const styleSelect = document.getElementById('p-style');
-  const wcLabel = document.querySelector('label[for="p-weightclass"]') || 
-    document.evaluate('//label[contains(text(),"Target Weight Class")]', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
   styleSelect.addEventListener('change', () => {
     state.profile.style = styleSelect.value;
     saveState();
