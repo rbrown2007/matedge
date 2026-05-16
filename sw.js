@@ -1,14 +1,13 @@
-const CACHE_VERSION = 12;
+const CACHE_VERSION = 13;
 const CACHE_NAME = `bftm-v${CACHE_VERSION}`;
+
+// Only cache truly static assets — never index.html
 const ASSETS = [
-  '/',
-  '/index.html',
   '/manifest.json',
   '/icons/icon-192.png',
   '/icons/icon-512.png',
 ];
 
-// Install — cache core app assets
 self.addEventListener('install', event => {
   event.waitUntil(
     caches.open(CACHE_NAME)
@@ -17,7 +16,6 @@ self.addEventListener('install', event => {
   );
 });
 
-// Activate — clean up old caches
 self.addEventListener('activate', event => {
   event.waitUntil(
     caches.keys().then(keys =>
@@ -26,37 +24,25 @@ self.addEventListener('activate', event => {
   );
 });
 
-// Fetch — let blog routes and API calls pass straight through to the server
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
 
   if (event.request.method !== 'GET') return;
 
-  // ALWAYS pass these through to the server — never cache or intercept
+  // Always fetch fresh from server — never cache these
   if (
+    url.pathname === '/' ||
+    url.pathname === '/index.html' ||
     url.pathname.startsWith('/blog') ||
     url.pathname.startsWith('/api/') ||
+    url.pathname === '/firebase-config.js' ||
     url.hostname !== self.location.hostname
   ) {
     event.respondWith(fetch(event.request));
     return;
   }
 
-  // Network-first for the main app HTML — always get fresh updates
-  if (url.pathname === '/' || url.pathname === '/index.html') {
-    event.respondWith(
-      fetch(event.request)
-        .then(res => {
-          const clone = res.clone();
-          caches.open(CACHE_NAME).then(c => c.put(event.request, clone));
-          return res;
-        })
-        .catch(() => caches.match(event.request))
-    );
-    return;
-  }
-
-  // Cache-first for static assets (icons, manifest, fonts)
+  // Cache-first for static assets only
   event.respondWith(
     caches.match(event.request).then(cached => {
       if (cached) return cached;
