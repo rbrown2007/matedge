@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Page Not Found | Built for the Mat</title>
+<link rel="icon" href="/favicon.ico" type="image/x-icon">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root { --gold: #C9A84C; --bg: #0A0A0B; --surface: #1C1C21; --text: #F0EDE6; --muted: #9A9690; --border: rgba(255,255,255,0.08); }
+  body { background: var(--bg); color: var(--text); font-family: system-ui, -apple-system, sans-serif; min-height: 100vh; display: flex; flex-direction: column; }
+  header { background: #131316; border-bottom: 1px solid var(--border); padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; }
+  .logo { font-family: 'Barlow Condensed', system-ui; font-size: 22px; font-weight: 900; color: var(--gold); text-decoration: none; letter-spacing: 0.04em; }
+  .logo span { color: var(--text); }
+  main { flex: 1; display: flex; align-items: center; justify-content: center; padding: 48px 24px; text-align: center; }
+  .content { max-width: 480px; }
+  .error-code { font-family: 'Barlow Condensed', system-ui; font-size: 120px; font-weight: 900; color: var(--gold); line-height: 1; opacity: 0.3; margin-bottom: 8px; }
+  h1 { font-size: 28px; font-weight: 700; margin-bottom: 12px; }
+  p { color: var(--muted); margin-bottom: 32px; font-size: 16px; }
+  .btn-grid { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+  .btn { padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 15px; }
+  .btn-primary { background: var(--gold); color: #0A0A0B; }
+  .btn-secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border); }
+  footer { background: #131316; border-top: 1px solid var(--border); padding: 20px 24px; text-align: center; color: var(--muted); font-size: 13px; }
+  footer a { color: var(--gold); text-decoration: none; }
+</style>
+</head>
+<body>
+<header>
+  <a href="/" class="logo">BUILT FOR <span>THE MAT</span></a>
+</header>
+<main>
+  <div class="content">
+    <div class="error-code">404</div>
+    <h1>Page Not Found</h1>
+    <p>The page you're looking for doesn't exist or may have moved. Head back to the app or check out the blog.</p>
+    <div class="btn-grid">
+      <a href="/" class="btn btn-primary">⚡ Open the App</a>
+      <a href="/blog" class="btn btn-secondary">📖 Read the Blog</a>
+    </div>
+  </div>
+</main>
+<footer>
+  © 2025 Built for the Mat · <a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="mailto:support@builtforthemat.com">Support</a>
+</footer>
+</body>
+</html>

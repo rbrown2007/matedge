@@ -273,9 +273,13 @@ const server = http.createServer(async (req, res) => {
         return;
       }
       // For app routes, fall back to index.html (SPA behavior)
-      fs.readFile(path.join(DIR, 'index.html'), (e2, d2) => {
+      // For truly unknown routes, serve the branded 404 page
+      const isKnownAppRoute = ['/', '/index.html', '/manifest.json', '/sw.js', '/favicon.ico', '/favicon.png'].includes(pathname) || pathname.startsWith('/icons/');
+      const fallbackFile = isKnownAppRoute ? 'index.html' : '404.html';
+      const fallbackStatus = isKnownAppRoute ? 200 : 404;
+      fs.readFile(path.join(DIR, fallbackFile), (e2, d2) => {
         if (e2) { res.writeHead(404); res.end('Not found'); return; }
-        res.writeHead(200, { 'Content-Type': 'text/html' });
+        res.writeHead(fallbackStatus, { 'Content-Type': 'text/html', ...SECURITY_HEADERS });
         res.end(d2);
       });
       return;
