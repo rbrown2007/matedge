@@ -1,4 +1,4 @@
-const CACHE_VERSION = 2;
+const CACHE_VERSION = 10;
 const CACHE_NAME = `bftm-v${CACHE_VERSION}`;
 const ASSETS = [
   '/',

@@ -110,6 +110,49 @@
 
 ---
 
+## v0.7.0 — Logo & Branding
+**Status:** Complete
+- Custom SVG wordmark logo embedded in app header
+- Mat ring / victory figure icon added to header (upper right)
+- Athlete name moved inside SVG wordmark as a third line — no more truncation on mobile
+- App icons regenerated to match new branding
+
+---
+
+## v0.8.0 — Nutrition Overhaul & Sex/Cycle Awareness
+**Status:** Complete
+- **Biological Sex** field added to profile — drives all downstream calculations
+- **Menstrual Cycle Phase** field for female athletes — adjusts caloric targets, macros, and supplements
+- BMR formula upgraded to Mifflin-St Jeor (more accurate, sex-aware)
+- Women's Freestyle and Women's College/WCWA weight classes added
+- Cycle phase guidance banners in Daily Plan
+- Iron, Folate added to supplement stack for female athletes
+- Creatine dose adjusted for female athletes (3g vs 5g)
+- Nutrition tab rebuilt with real recipes, full ingredient lists, step-by-step instructions, coach tips
+- Cal Calc overhauled with category browsing and household measure portion options
+
+---
+
+## v0.9.0 — Competition Tools & UX Fixes
+**Status:** Complete
+- **Weigh-In Protocol tab** — full day-before, weigh-in morning, post weigh-in rehydration, between-match, and competition food guide. Personalized to athlete's cut amount and competition schedule.
+- Creatine taper logic — auto-adjusts supplement recommendation based on days to competition
+- Competition date field replaced with text input (MM/DD/YYYY) + custom calendar picker
+- Desktop scroll fix — position:fixed iOS hack now scoped to iOS only via @supports query
+- All Styles option added to wrestling style dropdown
+- Style-aware weight class hint label
+
+---
+
+## v0.10.0 — Version Sync & Stability
+**Status:** Complete
+- Version number updated across footer, manifest, service worker cache
+- Service worker cache bumped to v10 — forces fresh load for all users
+- Minor footer text cleaned up
+
+---
+
+*Last updated: v0.10.0*
 ## Infrastructure
 **Status:** Complete (local)
 
