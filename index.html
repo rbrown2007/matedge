@@ -528,10 +528,10 @@
             <option value="folkstyle">Folkstyle</option>
           </select>
         </div>
-        <div class="field half"><label>Current Weight (lbs)</label><input id="p-weight" type="number" inputmode="decimal" placeholder="e.g. 160" /></div>
-        <div class="field half"><label>Height (inches)</label><input id="p-height" type="number" inputmode="decimal" placeholder="e.g. 70" /></div>
-        <div class="field half"><label>Age</label><input id="p-age" type="number" inputmode="numeric" placeholder="years" /></div>
-        <div class="field half"><label>Body Fat % (optional)</label><input id="p-bodyfat" type="number" inputmode="decimal" placeholder="e.g. 10" /></div>
+        <div class="field half"><label>Current Weight (lbs)</label><input id="p-weight" min="50" max="400" step="0.1" type="number" inputmode="decimal" placeholder="e.g. 160" /></div>
+        <div class="field half"><label>Height (inches)</label><input id="p-height" min="48" max="96" step="0.1" type="number" inputmode="decimal" placeholder="e.g. 70" /></div>
+        <div class="field half"><label>Age</label><input id="p-age" min="10" max="80" step="1" type="number" inputmode="numeric" placeholder="years" /></div>
+        <div class="field half"><label>Body Fat % (optional)</label><input id="p-bodyfat" min="3" max="40" step="0.1" type="number" inputmode="decimal" placeholder="e.g. 10" /></div>
         <div class="field" id="cycle-phase-field" style="display:none">
           <label>Menstrual Cycle Phase (optional)</label>
           <select id="p-cyclephase">
@@ -754,7 +754,7 @@
     </div>
   </main>
 
-  <footer>Built for the Mat v0.10.0 · Always consult a certified sports dietitian</footer>
+  <footer>Built for the Mat v0.11.0 · Always consult a certified sports dietitian · <a href="/privacy" style="color:var(--gold);text-decoration:none">Privacy</a> · <a href="/terms" style="color:var(--gold);text-decoration:none">Terms</a></footer>
 </div>
 
 <script>
@@ -786,6 +786,12 @@ function loadState() {
 }
 
 function saveState() {
+  // Sanitize profile numbers before saving
+  const p = state.profile;
+  if (p.weight && (parseFloat(p.weight) < 50 || parseFloat(p.weight) > 400)) p.weight = '';
+  if (p.height && (parseFloat(p.height) < 48 || parseFloat(p.height) > 96)) p.height = '';
+  if (p.age    && (parseFloat(p.age) < 10    || parseFloat(p.age) > 80))    p.age = '';
+  if (p.bodyFat && (parseFloat(p.bodyFat) < 3 || parseFloat(p.bodyFat) > 40)) p.bodyFat = '';
   try { localStorage.setItem('bftm_state', JSON.stringify(state)); } catch(e) {}
 }
 
@@ -793,8 +799,7 @@ function saveState() {
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('sw.js').then(reg => {
-      console.log('[BFTM] Service worker registered:', reg.scope);
-    }).catch(err => {
+        }).catch(err => {
       console.warn('[BFTM] SW registration failed:', err);
     });
   });
@@ -2550,17 +2555,7 @@ function renderCalcResultsUSDA(foods) {
     if (!qtyInput || !unitSel || !macrosDiv) return;
     const defaultSG = (f.servingSize && f.servingUnit === 'g') ? f.servingSize : 100;
 
-    function updateMacros() {
-      const qty = parseFloat(qtyInput.value) || 0;
-      const unit = unitSel.value;
-      let grams = unit === 'oz' ? qty * 28.3495 : unit === 'serving' ? qty * defaultSG : qty;
-      const m = calcMacrosUSDA(f, grams);
-      macrosDiv.innerHTML = `
-        <span class="calc-macro-pill pill-kcal">${m.kcal} kcal</span>
-        <span class="calc-macro-pill pill-p">${m.protein}g protein</span>
-        <span class="calc-macro-pill pill-c">${m.carbs}g carbs</span>
-        <span class="calc-macro-pill pill-f">${m.fat}g fat</span>`;
-    }
+    
     qtyInput.addEventListener('input', updateMacros);
     unitSel.addEventListener('change', updateMacros);
 
@@ -3969,6 +3964,67 @@ function toggleFAQ(id) {
   if (!isOpen) item.classList.add('open');
 }
 
+
+// ---- DATA EXPORT / IMPORT ----
+function exportData() {
+  const exportObj = {
+    version: '0.10.9',
+    exportDate: new Date().toISOString(),
+    state,
+    calcHistory,
+  };
+  const json = JSON.stringify(exportObj, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `bftm-backup-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.state || !data.state.profile) {
+        alert('Invalid backup file. Please use a file exported from Built for the Mat.');
+        return;
+      }
+      // Confirm before overwriting
+      if (!confirm('This will replace all your current data with the backup. Are you sure?')) return;
+
+      state = data.state;
+      if (!state.weightLog) state.weightLog = {};
+      if (!state.competitions) state.competitions = [];
+      if (!state.schedule) state.schedule = { ...DEFAULT_SCHEDULE };
+      saveState();
+
+      if (data.calcHistory) {
+        calcHistory = data.calcHistory;
+        saveCalcLog();
+      }
+
+      // Re-render everything
+      bindProfile();
+      renderTraining();
+      renderCompetitions();
+      renderNutrition();
+      renderProgress();
+      renderWeighIn();
+      renderFAQ();
+      alert('✓ Data imported successfully!');
+    } catch(err) {
+      alert('Could not read backup file. Make sure it is a valid BFTM export.');
+    }
+  };
+  reader.readAsText(file);
+  // Reset file input so same file can be re-imported
+  event.target.value = '';
+}
 
 // ---- INIT ----
 loadState();

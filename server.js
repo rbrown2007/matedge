@@ -13,7 +13,6 @@ const http = require('http');
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
-const url = require('url');
 
 const PORT = 3000;
 const DIR = __dirname;
@@ -37,7 +36,18 @@ const MIME = {
   '.json': 'application/json',
   '.png':  'image/png',
   '.ico':  'image/x-icon',
+  '.xml':  'application/xml',
+  '.txt':  'text/plain',
   '.css':  'text/css',
+};
+
+const SECURITY_HEADERS = {
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
+  'X-XSS-Protection': '1; mode=block',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+  'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',
+  'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
 };
 
 function sendJSON(res, statusCode, data) {
@@ -45,6 +55,7 @@ function sendJSON(res, statusCode, data) {
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, OPTIONS',
+    ...SECURITY_HEADERS,
   });
   res.end(JSON.stringify(data));
 }
@@ -185,24 +196,58 @@ async function handleFoodSearch(req, res, query) {
 }
 
 const server = http.createServer(async (req, res) => {
-  const parsed = url.parse(req.url, true);
+  const parsed = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
   const pathname = parsed.pathname;
+
+  // HTTPS redirect (when running behind Railway or other proxies)
+  const proto = req.headers['x-forwarded-proto'];
+  if (proto && proto !== 'https') {
+    res.writeHead(301, { 'Location': `https://${req.headers.host}${req.url}` });
+    res.end();
+    return;
+  }
 
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
-    res.writeHead(204, { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET' });
+    res.writeHead(204, { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET', ...SECURITY_HEADERS });
     res.end();
     return;
   }
 
   if (pathname === '/api/food-search') {
     try {
-      await handleFoodSearch(req, res, parsed.query.q);
+      await handleFoodSearch(req, res, parsed.searchParams.get('q'));
     } catch(e) {
       console.error('[BFTM] Food search error:', e);
       sendJSON(res, 500, { error: e.message, fallback: true });
     }
     return;
+  }
+
+  // Legal pages
+  if (pathname === '/privacy') {
+    const fp = path.join(DIR, 'privacy.html');
+    const data = require('fs').readFileSync(fp);
+    res.writeHead(200, { 'Content-Type': 'text/html', 'Cache-Control': 'no-cache', ...SECURITY_HEADERS });
+    res.end(data); return;
+  }
+  if (pathname === '/terms') {
+    const fp = path.join(DIR, 'terms.html');
+    const data = require('fs').readFileSync(fp);
+    res.writeHead(200, { 'Content-Type': 'text/html', 'Cache-Control': 'no-cache', ...SECURITY_HEADERS });
+    res.end(data); return;
+  }
+  if (pathname === '/sitemap.xml') {
+    const fp = path.join(DIR, 'sitemap.xml');
+    const data = require('fs').readFileSync(fp);
+    res.writeHead(200, { 'Content-Type': 'application/xml', 'Cache-Control': 'max-age=86400' });
+    res.end(data); return;
+  }
+  if (pathname === '/robots.txt') {
+    const fp = path.join(DIR, 'robots.txt');
+    const data = require('fs').readFileSync(fp);
+    res.writeHead(200, { 'Content-Type': 'text/plain', 'Cache-Control': 'max-age=86400' });
+    res.end(data); return;
   }
 
   // Blog routes — serve from /blog/ folder
@@ -217,8 +262,17 @@ const server = http.createServer(async (req, res) => {
   }
   if (!filePath.startsWith(DIR)) { res.writeHead(403); res.end('Forbidden'); return; }
 
+  console.log(`[BFTM] Serving: ${filePath}`);
   fs.readFile(filePath, (err, data) => {
     if (err) {
+      if (!pathname.includes('favicon')) console.warn(`[BFTM] File not found: ${filePath}`);
+      // For blog routes, return proper 404 (don't silently serve app)
+      if (pathname.startsWith('/blog')) {
+        res.writeHead(404, { 'Content-Type': 'text/html' });
+        res.end(`<h1>404 - Blog page not found</h1><p>Looking for: ${filePath}</p><p>DIR is: ${DIR}</p>`);
+        return;
+      }
+      // For app routes, fall back to index.html (SPA behavior)
       fs.readFile(path.join(DIR, 'index.html'), (e2, d2) => {
         if (e2) { res.writeHead(404); res.end('Not found'); return; }
         res.writeHead(200, { 'Content-Type': 'text/html' });
@@ -230,7 +284,8 @@ const server = http.createServer(async (req, res) => {
     res.writeHead(200, {
       'Content-Type': MIME[ext] || 'application/octet-stream',
       'Cache-Control': ext === '.html' ? 'no-cache' : 'max-age=86400',
-      'Service-Worker-Allowed': '/'
+      'Service-Worker-Allowed': '/',
+      ...SECURITY_HEADERS,
     });
     res.end(data);
   });
