@@ -2281,6 +2281,7 @@ function renderCalcLog() {
       calcHistory[todayKey()] = log;
       saveCalcLog();
       renderCalcLog();
+      if (currentTab === 'progress') renderProgress();
     });
   });
 }
@@ -2564,6 +2565,7 @@ function renderCalcResultsUSDA(foods) {
         calcHistory[todayKey()] = todayLog;
         saveCalcLog();
         renderCalcLog();
+        if (currentTab === 'progress') renderProgress();
         addBtn.textContent = '✓ Added!';
         addBtn.style.color = 'var(--success)';
         setTimeout(() => { addBtn.textContent = '+ Add to Log'; addBtn.style.color = ''; }, 1500);
@@ -2671,6 +2673,7 @@ function renderCalcResults(foods) {
         calcHistory[todayKey()] = todayLog;
         saveCalcLog();
         renderCalcLog();
+        if (currentTab === 'progress') renderProgress();
         addBtn.textContent = '✓ Added!';
         addBtn.style.color = 'var(--success)';
         setTimeout(() => { addBtn.textContent = '+ Add to Log'; addBtn.style.color = ''; }, 1500);
@@ -2698,6 +2701,7 @@ function initCalcPage() {
     calcHistory[todayKey()] = [];
     saveCalcLog();
     renderCalcLog();
+    if (currentTab === 'progress') renderProgress();
   });
 
   // Category browse buttons
@@ -2804,6 +2808,26 @@ function migrateWeightLog() {
   });
 }
 
+function macroBar(logged, target, color) {
+  const pct = target > 0 ? Math.min(100, Math.round((logged / target) * 100)) : 0;
+  const overColor = pct > 110 ? 'var(--red-bright)' : color;
+  return '<div class="prog-macro-track"><div class="prog-macro-fill" style="width:' + pct + '%;background:' + overColor + '"></div></div>';
+}
+
+function getWeekMacroRows(weekDays) {
+  const logged = weekDays.filter(d => d.hasData);
+  if (!logged.length) return '';
+  const totalP = logged.reduce((s,d) => s + (d.loggedProtein || 0), 0);
+  const totalC = logged.reduce((s,d) => s + (d.loggedCarbs || 0), 0);
+  const totalF = logged.reduce((s,d) => s + (d.loggedFat || 0), 0);
+  const avgP = Math.round(totalP / logged.length);
+  const avgC = Math.round(totalC / logged.length);
+  const avgF = Math.round(totalF / logged.length);
+  return '<div class="prog-summary-row"><span class="prog-summary-label">Avg daily protein</span><span class="prog-summary-val" style="color:#4A9C6A">' + avgP + 'g</span></div>'
+    + '<div class="prog-summary-row"><span class="prog-summary-label">Avg daily carbs</span><span class="prog-summary-val" style="color:var(--gold)">' + avgC + 'g</span></div>'
+    + '<div class="prog-summary-row"><span class="prog-summary-label">Avg daily fat</span><span class="prog-summary-val" style="color:var(--red-bright)">' + avgF + 'g</span></div>';
+}
+
 function renderProgress() {
   const content = document.getElementById('progress-content');
   const subtitle = document.getElementById('progress-subtitle');
@@ -2879,12 +2903,6 @@ function renderProgress() {
   const loggedTodayProtein = todayLog.reduce((s,i) => s + (i.protein || 0), 0);
   const loggedTodayCarbs = todayLog.reduce((s,i) => s + (i.carbs || 0), 0);
   const loggedTodayFat = todayLog.reduce((s,i) => s + (i.fat || 0), 0);
-
-  function macroBar(logged, target, color) {
-    const pct = target > 0 ? Math.min(100, Math.round((logged / target) * 100)) : 0;
-    const overColor = pct > 110 ? 'var(--red-bright)' : color;
-    return `<div class="prog-macro-track"><div class="prog-macro-fill" style="width:${pct}%;background:${overColor}"></div></div>`;
-  }
 
   const todayMacroHTML = `
     <div class="prog-today-macros">
