@@ -411,6 +411,7 @@
         <div class="field half"><label>Wrestling Style</label>
           <select id="p-style">
             <option value="">Select style</option>
+            <option value="all">All Styles (Freestyle, Greco & Folkstyle)</option>
             <option value="freestyle">Freestyle</option>
             <option value="greco">Greco-Roman</option>
             <option value="folkstyle">Folkstyle</option>
@@ -432,7 +433,7 @@
           <p style="font-size:11px;color:var(--text-muted);margin-top:5px">Cycle phase adjusts caloric targets, supplement recommendations, and cut strategy guidance.</p>
         </div>
         <div class="field">
-          <label>Target Weight Class</label>
+          <label>Target Weight Class<span id="wc-style-hint" style="font-weight:400;color:var(--text-muted);text-transform:none;letter-spacing:0"></span></label>
           <select id="p-weightclass">
             <option value="">Select weight class</option>
             <optgroup label="Junior High / Middle School">
@@ -732,6 +733,23 @@ function bindProfile() {
   } else if (state.profile.weightClass) {
     wcSelect.value = state.profile.weightClass;
   }
+
+  // Update weight class hint based on style selected
+  const styleSelect = document.getElementById('p-style');
+  const wcLabel = document.querySelector('label[for="p-weightclass"]') || 
+    document.evaluate('//label[contains(text(),"Target Weight Class")]', document, null, XPathResult.FIRST_ORDERED_NODE_TYPE, null).singleNodeValue;
+  styleSelect.addEventListener('change', () => {
+    state.profile.style = styleSelect.value;
+    saveState();
+    const hint = {
+      all: ' — All weight class groups shown below',
+      freestyle: ' — See Freestyle / Greco-Roman groups',
+      greco: ' — See Freestyle / Greco-Roman groups',
+      folkstyle: ' — See NCAA Folkstyle or High School groups',
+    };
+    const hintEl = document.getElementById('wc-style-hint');
+    if (hintEl) hintEl.textContent = hint[styleSelect.value] || '';
+  });
 
   // Show cycle phase field for female athletes
   const sexSelect = document.getElementById('p-sex');
