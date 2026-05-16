@@ -188,16 +188,27 @@
   .comp-list { display: flex; flex-direction: column; gap: 12px; margin-bottom: 16px; }
   .comp-card { background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; border-left-width: 3px; }
   .comp-fields { display: flex; flex-direction: column; gap: 10px; margin-bottom: 10px; }
-  .comp-fields input[type='date'] {
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-    box-sizing: border-box;
-    display: block;
-    -webkit-appearance: none;
-    appearance: none;
-    overflow: hidden;
-  }
+  .comp-date-wrap { position: relative; display: flex; gap: 6px; align-items: center; }
+  .comp-date-wrap .comp-date-input { flex: 1; }
+  .comp-date-cal-btn { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius); color: var(--gold); padding: 8px 10px; font-size: 16px; cursor: pointer; flex-shrink: 0; line-height: 1; transition: background 0.15s; }
+  .comp-date-cal-btn:hover { background: var(--bg-surface); border-color: var(--gold-dim); }
+  .comp-date-picker { display: none; position: absolute; top: calc(100% + 6px); left: 0; z-index: 200; background: var(--bg-surface); border: 1px solid var(--border-accent); border-radius: var(--radius-lg); padding: 14px; box-shadow: 0 8px 24px rgba(0,0,0,0.4); width: 280px; }
+  .comp-date-picker.open { display: block; }
+  .cal-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .cal-nav-btn { background: transparent; border: none; color: var(--gold); font-size: 18px; cursor: pointer; padding: 4px 8px; border-radius: var(--radius); }
+  .cal-nav-btn:hover { background: var(--bg-elevated); }
+  .cal-month-label { font-family: var(--font-display); font-size: 15px; font-weight: 700; letter-spacing: 0.04em; color: var(--text-primary); }
+  .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+  .cal-day-header { font-size: 10px; font-weight: 600; letter-spacing: 0.08em; text-align: center; color: var(--text-muted); padding: 4px 0; }
+  .cal-day { font-size: 13px; text-align: center; padding: 6px 2px; border-radius: 4px; cursor: pointer; color: var(--text-secondary); background: transparent; border: none; }
+  .cal-day:hover { background: var(--bg-elevated); color: var(--text-primary); }
+  .cal-day.today { color: var(--gold); font-weight: 700; }
+  .cal-day.selected { background: var(--gold); color: var(--bg-deep); font-weight: 700; }
+  .cal-day.other-month { color: var(--text-muted); opacity: 0.4; }
+  .cal-day.empty { cursor: default; }
+  .comp-date-input { flex: 1; }
+  .comp-date-input::placeholder { color: var(--text-muted); }
+  .comp-date-error { font-size: 11px; color: var(--red-bright); margin-top: 3px; display: none; }
   .comp-footer { display: flex; justify-content: space-between; align-items: center; }
   .days-out { font-size: 12px; }
   .btn-remove { background: transparent; color: var(--text-muted); font-size: 12px; padding: 4px 10px; border: 1px solid var(--border); }
@@ -820,6 +831,134 @@ function getIntensity(type) {
 }
 
 // ---- COMPETITIONS ----
+// ---- CALENDAR PICKER ----
+const MONTH_NAMES = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const DAY_HEADERS = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+
+let openCalId = null;
+
+function buildCalendar(calEl, isoDate, onSelect) {
+  const today = new Date();
+  const current = isoDate ? new Date(isoDate + 'T12:00:00') : new Date();
+  let viewYear = current.getFullYear();
+  let viewMonth = current.getMonth();
+
+  function render() {
+    const firstDay = new Date(viewYear, viewMonth, 1).getDay();
+    const daysInMonth = new Date(viewYear, viewMonth + 1, 0).getDate();
+    const selectedISO = isoDate;
+
+    let html = `<div class="cal-nav">
+      <button class="cal-nav-btn" id="cal-prev">‹</button>
+      <span class="cal-month-label">${MONTH_NAMES[viewMonth]} ${viewYear}</span>
+      <button class="cal-nav-btn" id="cal-next">›</button>
+    </div>
+    <div class="cal-grid">
+      ${DAY_HEADERS.map(d => `<div class="cal-day-header">${d}</div>`).join('')}
+      ${Array(firstDay).fill('<div class="cal-day empty"></div>').join('')}
+      ${Array.from({length: daysInMonth}, (_,i) => {
+        const day = i + 1;
+        const month = String(viewMonth+1).padStart(2,'0');
+        const dayStr = String(day).padStart(2,'0');
+        const thisISO = `${viewYear}-${month}-${dayStr}`;
+        const isToday = today.getFullYear()===viewYear && today.getMonth()===viewMonth && today.getDate()===day;
+        const isSelected = selectedISO === thisISO;
+        return `<button class="cal-day${isToday?' today':''}${isSelected?' selected':''}" data-iso="${thisISO}">${day}</button>`;
+      }).join('')}
+    </div>`;
+
+    calEl.innerHTML = html;
+
+    calEl.querySelector('#cal-prev').addEventListener('click', e => {
+      e.stopPropagation();
+      viewMonth--; if (viewMonth < 0) { viewMonth = 11; viewYear--; }
+      render();
+    });
+    calEl.querySelector('#cal-next').addEventListener('click', e => {
+      e.stopPropagation();
+      viewMonth++; if (viewMonth > 11) { viewMonth = 0; viewYear++; }
+      render();
+    });
+    calEl.querySelectorAll('.cal-day[data-iso]').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.stopPropagation();
+        isoDate = btn.dataset.iso;
+        onSelect(isoDate);
+        render();
+      });
+    });
+  }
+  render();
+}
+
+function closeAllCals() {
+  document.querySelectorAll('.comp-date-picker.open').forEach(el => el.classList.remove('open'));
+  openCalId = null;
+}
+
+document.addEventListener('click', (e) => {
+  if (!e.target.closest('.comp-date-wrap')) closeAllCals();
+});
+
+function initCalButton(compId, comp) {
+  const calBtn = document.querySelector(`[data-calid="${compId}"]`);
+  const calEl = document.getElementById(`cal-${compId}`);
+  const textInput = calBtn?.closest('.comp-date-wrap')?.querySelector('.comp-date-input');
+  if (!calBtn || !calEl || !textInput) return;
+
+  calBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (calEl.classList.contains('open')) {
+      closeAllCals();
+      return;
+    }
+    closeAllCals();
+    calEl.classList.add('open');
+    openCalId = compId;
+    buildCalendar(calEl, comp.date || null, (iso) => {
+      comp.date = iso;
+      textInput.value = formatDateForDisplay(iso);
+      textInput.style.borderColor = '';
+      const errEl = document.getElementById(`date-err-${compId}`);
+      if (errEl) errEl.style.display = 'none';
+      saveState();
+      closeAllCals();
+      renderCompetitions();
+    });
+  });
+}
+
+function formatDateForDisplay(isoDate) {
+  // Convert YYYY-MM-DD → MM/DD/YYYY for display
+  if (!isoDate) return '';
+  const parts = isoDate.split('-');
+  if (parts.length !== 3) return isoDate;
+  return `${parts[1]}/${parts[2]}/${parts[0]}`;
+}
+
+function parseDateInput(val) {
+  // Accept MM/DD/YYYY or M/D/YYYY → returns YYYY-MM-DD or null
+  const cleaned = val.trim().replace(/[^0-9/]/g, '');
+  const match = cleaned.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (!match) return null;
+  const [, m, d, y] = match;
+  const month = m.padStart(2, '0');
+  const day = d.padStart(2, '0');
+  const year = parseInt(y);
+  if (year < 2020 || year > 2040) return null;
+  if (parseInt(m) < 1 || parseInt(m) > 12) return null;
+  if (parseInt(d) < 1 || parseInt(d) > 31) return null;
+  return `${y}-${month}-${day}`;
+}
+
+function autoFormatDate(input) {
+  // Auto-insert slashes as user types: 12 → 12/, 1225 → 12/25/
+  let val = input.value.replace(/[^0-9]/g, '');
+  if (val.length >= 3) val = val.slice(0,2) + '/' + val.slice(2);
+  if (val.length >= 6) val = val.slice(0,5) + '/' + val.slice(5,9);
+  input.value = val;
+}
+
 function renderCompetitions() {
   const list = document.getElementById('comp-list');
   list.innerHTML = '';
@@ -838,7 +977,16 @@ function renderCompetitions() {
     card.innerHTML = `
       <div class="comp-fields">
         <div class="field"><label>Event Name</label><input type="text" placeholder="e.g. US Open" value="${comp.name||''}" data-field="name" /></div>
-        <div class="field"><label>Date</label><input type="date" value="${comp.date||''}" data-field="date" /></div>
+        <div class="field"><label>Date</label>
+          <div class="comp-date-wrap" id="date-wrap-${comp.id}">
+            <input type="text" class="comp-date-input" placeholder="MM/DD/YYYY"
+              value="${comp.date ? formatDateForDisplay(comp.date) : ''}"
+              data-field="date" inputmode="numeric" maxlength="10" />
+            <button class="comp-date-cal-btn" data-calid="${comp.id}" type="button" title="Pick a date">📅</button>
+            <div class="comp-date-picker" id="cal-${comp.id}"></div>
+          </div>
+          <div class="comp-date-error" id="date-err-${comp.id}">Invalid date — use MM/DD/YYYY</div>
+        </div>
         <div class="field"><label>Target Weight (lbs)</label><input type="number" inputmode="decimal" placeholder="lbs" value="${comp.targetWeight||''}" data-field="targetWeight" /></div>
         <div class="field"><label>Priority</label>
           <select data-field="priority">
@@ -854,14 +1002,49 @@ function renderCompetitions() {
       </div>
     `;
     card.querySelectorAll('[data-field]').forEach(el => {
-      el.addEventListener('change', e => {
-        const c = state.competitions.find(x => x.id === comp.id);
-        if (c) { c[e.target.dataset.field] = e.target.value; saveState(); renderCompetitions(); }
-      });
-      el.addEventListener('input', e => {
-        const c = state.competitions.find(x => x.id === comp.id);
-        if (c) { c[e.target.dataset.field] = e.target.value; saveState(); }
-      });
+      if (el.dataset.field === 'date') {
+        // Auto-format as user types
+        el.addEventListener('input', e => {
+          autoFormatDate(el);
+          const iso = parseDateInput(el.value);
+          const errEl = document.getElementById(`date-err-${comp.id}`);
+          if (iso) {
+            if (errEl) errEl.style.display = 'none';
+            el.style.borderColor = '';
+            const c = state.competitions.find(x => x.id === comp.id);
+            if (c) { c.date = iso; saveState(); }
+          } else if (el.value.length >= 10) {
+            if (errEl) errEl.style.display = 'block';
+            el.style.borderColor = 'var(--red-bright)';
+          } else {
+            if (errEl) errEl.style.display = 'none';
+            el.style.borderColor = '';
+          }
+        });
+        el.addEventListener('blur', () => {
+          // Reformat on blur to clean up partial entries
+          const iso = parseDateInput(el.value);
+          const errEl = document.getElementById(`date-err-${comp.id}`);
+          if (iso) {
+            el.value = formatDateForDisplay(iso);
+            if (errEl) errEl.style.display = 'none';
+            el.style.borderColor = '';
+            renderCompetitions();
+          } else if (el.value.length > 0) {
+            if (errEl) errEl.style.display = 'block';
+            el.style.borderColor = 'var(--red-bright)';
+          }
+        });
+      } else {
+        el.addEventListener('change', e => {
+          const c = state.competitions.find(x => x.id === comp.id);
+          if (c) { c[e.target.dataset.field] = e.target.value; saveState(); renderCompetitions(); }
+        });
+        el.addEventListener('input', e => {
+          const c = state.competitions.find(x => x.id === comp.id);
+          if (c) { c[e.target.dataset.field] = e.target.value; saveState(); }
+        });
+      }
     });
     card.querySelector('.btn-remove').addEventListener('click', () => {
       state.competitions = state.competitions.filter(x => x.id !== comp.id);
@@ -869,6 +1052,7 @@ function renderCompetitions() {
       renderCompetitions();
     });
     list.appendChild(card);
+    initCalButton(comp.id, comp);
   });
 }
 
