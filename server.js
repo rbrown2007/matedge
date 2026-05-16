@@ -205,7 +205,16 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  let filePath = path.join(DIR, pathname === '/' ? 'index.html' : pathname);
+  // Blog routes — serve from /blog/ folder
+  let filePath;
+  if (pathname === '/blog' || pathname === '/blog/') {
+    filePath = path.join(DIR, 'blog', 'index.html');
+  } else if (pathname.startsWith('/blog/')) {
+    const slug = pathname.replace('/blog/', '');
+    filePath = path.join(DIR, 'blog', slug.endsWith('.html') ? slug : slug + '.html');
+  } else {
+    filePath = path.join(DIR, pathname === '/' ? 'index.html' : pathname);
+  }
   if (!filePath.startsWith(DIR)) { res.writeHead(403); res.end('Forbidden'); return; }
 
   fs.readFile(filePath, (err, data) => {

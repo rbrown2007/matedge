@@ -2469,35 +2469,43 @@ async function searchFood(query) {
   const status = document.getElementById('calc-status');
   const results = document.getElementById('calc-results');
   const q = query.toLowerCase().trim();
-  status.textContent = 'Searching...';
+  status.innerHTML = '<span style="color:var(--text-muted)">Searching...</span>';
   results.innerHTML = '';
 
-  // Try server proxy first (full USDA database)
+  // Try server proxy first (USDA + Open Food Facts — 3M+ foods)
   try {
     const res = await fetch(`/api/food-search?q=${encodeURIComponent(query)}`);
     if (res.ok) {
       const data = await res.json();
       if (data.foods && data.foods.length > 0) {
-        status.textContent = `${data.foods.length} results found`;
+        const sourceLabel = data.source === 'usda+off' ? 'USDA + Open Food Facts'
+          : data.source === 'usda' ? 'USDA FoodData Central'
+          : data.source === 'off' ? 'Open Food Facts'
+          : 'food database';
+        status.innerHTML = `<strong style="color:var(--text-primary)">${data.foods.length} results</strong>
+          <span style="color:var(--text-muted)"> from ${sourceLabel}</span>`;
         renderCalcResultsUSDA(data.foods);
+        return;
+      } else if (!data.fallback) {
+        status.textContent = 'No results found in database. Try a different search term.';
         return;
       }
     }
   } catch(e) {
-    // Server unreachable or offline — fall through to local database
+    // Server unreachable — fall through to local database
   }
 
-  // Fallback: built-in local database
+  // Fallback: built-in local database (138 items, works offline)
   const matches = FOOD_DB_SEARCH.filter(f =>
     f.name.toLowerCase().includes(q) || f.cat.toLowerCase().includes(q)
   );
 
   if (!matches.length) {
-    status.textContent = 'No results found. Try: chicken, rice, eggs, salmon, oats...';
+    status.innerHTML = `No results found. <span style="color:var(--text-muted)">Make sure the server is running (<code>node server.js</code>) for access to 3M+ foods. Offline: try chicken, rice, yogurt, eggs, oats...</span>`;
     return;
   }
 
-  status.textContent = `${matches.length} result${matches.length > 1 ? 's' : ''} found (offline database)`;
+  status.innerHTML = `<strong style="color:var(--text-primary)">${matches.length} result${matches.length > 1 ? 's' : ''}</strong> <span style="color:var(--text-muted)">(offline database — start server for full search)</span>`;
   renderCalcResults(matches);
 }
 
@@ -2512,7 +2520,11 @@ function renderCalcResultsUSDA(foods) {
     return `
       <div class="calc-result-card" id="calc-card-${i}">
         <div class="calc-result-name">${f.name}</div>
-        <div class="calc-result-brand">${[f.brand, f.category].filter(Boolean).join(' · ')} · per 100g: ${f.kcal} kcal</div>
+        <div class="calc-result-brand">
+          ${[f.brand, f.category].filter(Boolean).join(' · ')}
+          ${f.sodium ? `· <span style="color:${f.sodium > 400 ? 'var(--red-bright)' : 'var(--text-muted)'}">Na: ${f.sodium}mg/100g${f.sodium > 400 ? ' ⚠ high' : ''}</span>` : ''}
+          · <span style="color:var(--text-muted)">${f.source === 'off' ? '🌍' : '🇺🇸'} per 100g: ${f.kcal} kcal</span>
+        </div>
         <div class="calc-portion-row">
           <input type="number" id="calc-qty-${i}" value="${sg}" min="1" max="2000" step="1" inputmode="decimal" />
           <select id="calc-unit-${i}">
