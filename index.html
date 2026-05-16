@@ -23,7 +23,7 @@
 <link rel="apple-touch-icon" href="icons/icon-152.png" />
 <link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192.png" />
 
-<!-- Firebase SDK v12.13.0 -->
+<!-- Firebase SDK v12.13.0 — config loaded from firebase-config.js (gitignored) -->
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js';
   import { getAuth, onAuthStateChanged, signInWithEmailAndPassword,
@@ -34,27 +34,31 @@
            collection, getDocs, writeBatch }
     from 'https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js';
 
-  const firebaseConfig = {
-    apiKey: "AIzaSyAJOsWJVuSoN5ZfDM0aiwsACIQip8-4w_c",
-    authDomain: "built-for-the-mat.firebaseapp.com",
-    projectId: "built-for-the-mat",
-    storageBucket: "built-for-the-mat.firebasestorage.app",
-    messagingSenderId: "628223312574",
-    appId: "1:628223312574:web:883b3c20a9bde0767294ef",
-    measurementId: "G-ZX5RRYJ9XK"
-  };
+  // Load config from external file (not committed to git)
+  let firebaseConfig = {};
+  try {
+    const resp = await fetch('/firebase-config.js');
+    if (resp.ok) {
+      const text = await resp.text();
+      const match = text.match(/export default ({[\s\S]*?});/);
+      if (match) firebaseConfig = eval('(' + match[1] + ')');
+    }
+  } catch(e) {
+    console.warn('[BFTM] Firebase config not found — auth disabled');
+  }
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
-  const googleProvider = new GoogleAuthProvider();
+  if (firebaseConfig.apiKey) {
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+    const googleProvider = new GoogleAuthProvider();
 
-  // Expose to global scope for use in main script
-  window._firebase = { auth, db, googleProvider,
-    signInWithEmailAndPassword, createUserWithEmailAndPassword,
-    signInWithPopup, signOut, sendPasswordResetEmail,
-    onAuthStateChanged, doc, getDoc, setDoc, deleteDoc,
-    collection, getDocs, writeBatch };
+    window._firebase = { auth, db, googleProvider,
+      signInWithEmailAndPassword, createUserWithEmailAndPassword,
+      signInWithPopup, signOut, sendPasswordResetEmail,
+      onAuthStateChanged, doc, getDoc, setDoc, deleteDoc,
+      collection, getDocs, writeBatch };
+  }
 </script>
 
 <!-- Fonts -->

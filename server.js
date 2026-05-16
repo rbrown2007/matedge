@@ -224,6 +224,37 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // Firebase config — served from env vars on Railway, from file locally
+  if (pathname === '/firebase-config.js') {
+    // Build config from environment variables (set these in Railway dashboard)
+    const config = {
+      apiKey:            process.env.FIREBASE_API_KEY            || '',
+      authDomain:        process.env.FIREBASE_AUTH_DOMAIN        || '',
+      projectId:         process.env.FIREBASE_PROJECT_ID        || '',
+      storageBucket:     process.env.FIREBASE_STORAGE_BUCKET    || '',
+      messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID || '',
+      appId:             process.env.FIREBASE_APP_ID            || '',
+      measurementId:     process.env.FIREBASE_MEASUREMENT_ID    || '',
+    };
+    // Fall back to local file if env vars not set (local development)
+    if (!config.apiKey) {
+      try {
+        const localConfig = fs.readFileSync(path.join(DIR, 'firebase-config.js'), 'utf8');
+        res.writeHead(200, { 'Content-Type': 'application/javascript', 'Cache-Control': 'no-cache' });
+        res.end(localConfig);
+        return;
+      } catch(e) {
+        res.writeHead(200, { 'Content-Type': 'application/javascript' });
+        res.end('export default {};');
+        return;
+      }
+    }
+    const js = `export default ${JSON.stringify(config, null, 2)};`;
+    res.writeHead(200, { 'Content-Type': 'application/javascript', 'Cache-Control': 'no-cache' });
+    res.end(js);
+    return;
+  }
+
   // Legal pages
   if (pathname === '/privacy') {
     const fp = path.join(DIR, 'privacy.html');
