@@ -278,6 +278,21 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
+  // Debug endpoint — check Firebase env vars are set (remove after testing)
+  if (pathname === '/debug-firebase') {
+    const config = getFirebaseConfig();
+    sendJSON(res, 200, {
+      hasConfig: !!config,
+      hasApiKey: !!(config && config.apiKey),
+      envVarsSet: {
+        FIREBASE_API_KEY: !!process.env.FIREBASE_API_KEY,
+        FIREBASE_PROJECT_ID: !!process.env.FIREBASE_PROJECT_ID,
+        FIREBASE_APP_ID: !!process.env.FIREBASE_APP_ID,
+      }
+    });
+    return;
+  }
+
   // Legal pages
   if (pathname === '/privacy') {
     const fp = path.join(DIR, 'privacy.html');
