@@ -1213,7 +1213,7 @@ function calcTDEE(profile, trainingType, weightOverride) {
   const { height, age, sex, base, duration } = profile;
   // Use live logged weight if available, fall back to profile weight
   const weight = weightOverride || profile.weight;
-  if (!weight || !height || !age) return null;
+  if (!weight || !height || !age) return { bmr: 0, tdee: 0, mult: 1.4 };
   const isFemale = (sex || 'male') === 'female';
 
   // Mifflin-St Jeor BMR
@@ -1257,7 +1257,7 @@ function calcTDEE(profile, trainingType, weightOverride) {
 }
 
 function calcWaterOz(profile, trainingType) {
-  const weight = parseFloat(profile.weight) || 0;
+  const weight = parseFloat(profile?.weight) || 0;
   const isFemale = (profile.sex || 'male') === 'female';
   const base = isFemale ? 0.55 : 0.6;
 
@@ -1307,24 +1307,25 @@ function renderPlan() {
     .sort((a, b) => new Date(a.date) - new Date(b.date))[0];
   const daysToComp = nextComp ? Math.ceil((new Date(nextComp.date) - new Date()) / 86400000) : null;
 
-  const liveWeightNote = liveWeight && liveWeight !== parseFloat(weight)
-    ? ` · Live weight: ${liveWeight} lbs` : '';
-  const durationLabel = state.profile.duration ? `${state.profile.duration} min` : '90 min';
-  const baseLabel = { moderate: '1x/day', high: '2x/day', elite: 'Elite' }[state.profile.base] || '';
-  subtitle.textContent = `${today} · ${todayTraining} · ${durationLabel}${baseLabel ? ' · ' + baseLabel : ''}${liveWeightNote}${nextComp ? ' · ' + daysToComp + 'd to ' + (nextComp.name || 'next comp') : ''}`;
-
   const sex = state.profile.sex || 'male';
   const isFemale = sex === 'female';
   const cyclePhase = state.profile.cyclephase || '';
 
-  // Mifflin-St Jeor BMR (sex-accurate)
   // Use most recent logged AM weight as live cut-tracking weight
-  const recentWeights = Object.entries(state.weightLog)
+  const recentWeights = Object.entries(state.weightLog || {})
+    .filter(([, v]) => v && typeof v === 'object')
     .sort((a, b) => b[0].localeCompare(a[0]))
     .slice(0, 7);
   const latestAM = recentWeights.find(([, v]) => v && v.am);
   const liveWeight = latestAM ? latestAM[1].am : null;
   const effectiveWeight = liveWeight || parseFloat(weight);
+
+  // Subtitle — now that liveWeight is defined
+  const liveWeightNote = liveWeight && liveWeight !== parseFloat(weight)
+    ? ` · Live weight: ${liveWeight} lbs` : '';
+  const durationLabel = state.profile.duration ? `${state.profile.duration} min` : '90 min';
+  const baseLabel = { moderate: '1x/day', high: '2x/day', elite: 'Elite' }[state.profile.base] || '';
+  subtitle.textContent = `${today} · ${todayTraining} · ${durationLabel}${baseLabel ? ' · ' + baseLabel : ''}${liveWeightNote}${nextComp ? ' · ' + daysToComp + 'd to ' + (nextComp.name || 'next comp') : ''}`;
 
   const { bmr, tdee } = calcTDEE(state.profile, todayTraining, effectiveWeight);
   const waterOz = calcWaterOz(state.profile, todayTraining);
@@ -2073,7 +2074,8 @@ function renderNutrition() {
   const todayTraining = state.schedule[today] || 'Rest Day';
   const sex = state.profile.sex || 'male';
   const isFemale = sex === 'female';
-  const { tdee } = calcTDEE(state.profile, todayTraining);
+  const tdeeResult = calcTDEE(state.profile, todayTraining);
+  const { tdee } = tdeeResult || { tdee: 2000 };
   const nextComp = [...state.competitions].filter(c => c.date && new Date(c.date) > new Date()).sort((a,b) => new Date(a.date)-new Date(b.date))[0];
   const daysToComp = nextComp ? Math.ceil((new Date(nextComp.date) - new Date()) / 86400000) : null;
   const cutPerDay = (daysToComp && nextComp && nextComp.targetWeight) ? Math.max(0,(parseFloat(weight)-parseFloat(nextComp.targetWeight))/Math.max(1,daysToComp)) : 0;
@@ -2190,7 +2192,7 @@ function renderCalcLog() {
     const dayIdx = new Date().getDay();
     const today = DAYS[dayIdx === 0 ? 6 : dayIdx - 1];
     const todayTraining = state.schedule[today] || 'Rest Day';
-    const { tdee: target } = calcTDEE(state.profile, todayTraining);
+    const { tdee: target } = calcTDEE(state.profile, todayTraining) || { tdee: 2000 };
     const diff = totalKcal - target;
     const sign = diff >= 0 ? '+' : '';
     targetStr = ` <span style="color:${diff > 100 ? 'var(--red-bright)' : diff < -100 ? 'var(--gold)' : 'var(--success)'};font-size:11px">(${sign}${diff} vs target)</span>`;
@@ -2607,12 +2609,13 @@ function initCalcPage() {
 // ---- PROGRESS TRACKER ----
 function getDailyTarget(dateStr) {
   const { weight, height, age } = state.profile;
-  if (!weight || !height || !age) return null;
+  if (!weight || !height || !age) return { bmr: 0, tdee: 0, mult: 1.4 };
   const d = new Date(dateStr + 'T12:00:00');
   const dayIdx = d.getDay();
   const dayName = DAYS[dayIdx === 0 ? 6 : dayIdx - 1];
   const todayTraining = state.schedule[dayName] || 'Rest Day';
-  const { tdee } = calcTDEE(state.profile, todayTraining);
+  const tdeeResult = calcTDEE(state.profile, todayTraining);
+  const { tdee } = tdeeResult || { tdee: 2000 };
   const nextComp = [...state.competitions].filter(c => c.date && new Date(c.date) > new Date(dateStr)).sort((a,b) => new Date(a.date)-new Date(b.date))[0];
   const daysToComp = nextComp ? Math.ceil((new Date(nextComp.date) - new Date(dateStr + 'T12:00:00')) / 86400000) : null;
   const cutPerDay = (daysToComp && nextComp && nextComp.targetWeight) ? Math.max(0,(parseFloat(weight)-parseFloat(nextComp.targetWeight))/Math.max(1,daysToComp)) : 0;
