@@ -381,6 +381,43 @@
   .wi-stat-val { font-family: var(--font-display); font-size: 22px; font-weight: 700; color: var(--gold); }
   .wi-stat-label { font-size: 10px; color: var(--text-muted); letter-spacing: 0.07em; text-transform: uppercase; margin-top: 2px; }
 
+  /* Weight tracking */
+  .weight-entry-card { background: var(--bg-surface); border: 1px solid var(--border-accent); border-radius: var(--radius-lg); padding: 16px 18px; margin-bottom: 20px; }
+  .weight-entry-row { display: flex; gap: 10px; align-items: flex-end; margin-bottom: 10px; }
+  .weight-entry-row .field { flex: 1; margin-bottom: 0; }
+  .btn-log-weight { background: var(--gold); color: var(--bg-deep); padding: 8px 20px; font-size: 14px; font-weight: 700; border-radius: var(--radius); flex-shrink: 0; white-space: nowrap; }
+  .btn-log-weight:hover { background: var(--gold-light); }
+  .weight-chart-row { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-bottom: 1px solid var(--border); }
+  .weight-chart-label { font-size: 12px; color: var(--text-secondary); width: 72px; flex-shrink: 0; }
+  .weight-chart-track { flex: 1; background: var(--bg-elevated); border-radius: 3px; height: 10px; overflow: hidden; position: relative; }
+  .weight-chart-fill { height: 100%; border-radius: 3px; transition: width 0.4s; }
+  .weight-chart-target { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--red-bright); opacity: 0.7; }
+  .weight-chart-val { font-family: var(--font-display); font-size: 13px; font-weight: 700; width: 70px; text-align: right; flex-shrink: 0; }
+  .weight-chart-delta { font-size: 11px; width: 52px; text-align: right; flex-shrink: 0; }
+  .weight-today-badge { display: inline-block; font-size: 11px; background: rgba(201,168,76,0.15); color: var(--gold); border: 1px solid var(--border-accent); border-radius: 20px; padding: 2px 10px; margin-left: 8px; font-weight: 600; vertical-align: middle; }
+
+  /* FAQ */
+  .faq-disclaimer { background: rgba(176,48,48,0.12); border: 1px solid rgba(176,48,48,0.4); border-radius: var(--radius-lg); padding: 16px 18px; margin-bottom: 28px; }
+  .faq-disclaimer-title { font-family: var(--font-display); font-size: 15px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--red-bright); margin-bottom: 8px; }
+  .faq-disclaimer-text { font-size: 13px; color: #E88080; line-height: 1.6; }
+  .faq-section { margin-bottom: 28px; }
+  .faq-section-header { display: flex; align-items: center; gap: 10px; padding: 12px 16px; background: var(--bg-surface); border: 1px solid var(--border-accent); border-radius: var(--radius-lg); margin-bottom: 12px; }
+  .faq-section-icon { font-size: 20px; flex-shrink: 0; }
+  .faq-section-title { font-family: var(--font-display); font-size: 17px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; color: var(--gold); }
+  .faq-section-sub { font-size: 12px; color: var(--text-muted); margin-top: 1px; }
+  .faq-item { background: var(--bg-surface); border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 8px; overflow: hidden; }
+  .faq-question { display: flex; justify-content: space-between; align-items: center; padding: 13px 16px; cursor: pointer; font-size: 14px; font-weight: 600; color: var(--text-primary); gap: 10px; }
+  .faq-question:hover { background: var(--bg-elevated); }
+  .faq-chevron { color: var(--gold); font-size: 14px; flex-shrink: 0; transition: transform 0.2s; }
+  .faq-item.open .faq-chevron { transform: rotate(180deg); }
+  .faq-answer { display: none; padding: 0 16px 14px; font-size: 13px; color: var(--text-secondary); line-height: 1.7; border-top: 1px solid var(--border); padding-top: 12px; }
+  .faq-item.open .faq-answer { display: block; }
+  .faq-answer ul { padding-left: 18px; margin: 6px 0; }
+  .faq-answer li { margin-bottom: 4px; }
+  .faq-answer strong { color: var(--text-primary); }
+  .faq-answer .faq-tip { background: rgba(201,168,76,0.08); border-left: 2px solid var(--gold); padding: 8px 12px; border-radius: 0 4px 4px 0; margin-top: 10px; font-size: 12px; color: var(--gold-light); }
+  .faq-version { text-align: center; font-size: 11px; color: var(--text-muted); margin-top: 28px; padding-top: 16px; border-top: 1px solid var(--border); }
+
   @media (max-width: 600px) {
     .field.half { flex: 1 1 100%; }
     .stat-card { min-width: 0; }
@@ -441,6 +478,7 @@
       <button class="nav-btn" data-tab="calc">🔢 Cal Calc</button>
       <button class="nav-btn" data-tab="progress">📈 Progress</button>
       <button class="nav-btn" data-tab="weighin">⚖️ Weigh-In</button>
+      <button class="nav-btn" data-tab="faq">❓ FAQ</button>
     </div>
   </nav>
 
@@ -571,12 +609,23 @@
             <input id="p-weightclass-custom" type="number" inputmode="decimal" placeholder="Enter target weight in lbs" min="50" max="400" />
           </div>
         </div>
-        <div class="field"><label>Training Base</label>
+        <div class="field half"><label>Training Base</label>
           <select id="p-base">
             <option value="">Select activity level</option>
             <option value="moderate">Moderate (1 practice/day)</option>
             <option value="high">High (2 practices/day)</option>
             <option value="elite">Elite (2+ practices + S&C daily)</option>
+          </select>
+        </div>
+        <div class="field half"><label>Typical Practice Length</label>
+          <select id="p-duration">
+            <option value="">Select duration</option>
+            <option value="45">45 minutes</option>
+            <option value="60">60 minutes</option>
+            <option value="90">90 minutes (default)</option>
+            <option value="120">2 hours</option>
+            <option value="150">2.5 hours</option>
+            <option value="180">3+ hours</option>
           </select>
         </div>
         <div class="field"><label>Notes / Special Considerations</label>
@@ -673,6 +722,14 @@
       </div>
       <div id="weighin-content"></div>
     </div>
+    <!-- FAQ PAGE -->
+    <div id="page-faq" class="page">
+      <div class="section-header">
+        <div class="section-title-row"><div class="section-bar"></div><h2 class="section-title">FAQ & How to Use</h2></div>
+        <p class="section-sub">Everything you need to get the most out of Built for the Mat.</p>
+      </div>
+      <div id="faq-content"></div>
+    </div>
   </main>
 
   <footer>Built for the Mat v0.10.0 · Always consult a certified sports dietitian</footer>
@@ -764,12 +821,13 @@ document.querySelectorAll('.nav-btn').forEach(btn => {
     if (currentTab === 'calc') initCalcPage();
     if (currentTab === 'progress') renderProgress();
     if (currentTab === 'weighin') renderWeighIn();
+    if (currentTab === 'faq') renderFAQ();
   });
 });
 
 // ---- PROFILE ----
 function bindProfile() {
-  const fields = ['name','weight','height','age','bodyFat','sex','style','base','notes','cyclephase'];
+  const fields = ['name','weight','height','age','bodyFat','sex','style','base','duration','notes','cyclephase'];
   fields.forEach(f => {
     const el = document.getElementById('p-' + f);
     if (!el) return;
@@ -1142,6 +1200,85 @@ document.getElementById('btn-add-comp').addEventListener('click', () => {
   renderCompetitions();
 });
 
+// ---- SHARED CALCULATION HELPERS ----
+
+function calcTDEE(profile, trainingType, weightOverride) {
+  const { height, age, sex, base, duration } = profile;
+  // Use live logged weight if available, fall back to profile weight
+  const weight = weightOverride || profile.weight;
+  if (!weight || !height || !age) return null;
+  const isFemale = (sex || 'male') === 'female';
+
+  // Mifflin-St Jeor BMR
+  const bmrBase = (10 * parseFloat(weight) * 0.453592)
+    + (6.25 * parseFloat(height) * 2.54)
+    - (5 * parseFloat(age));
+  const bmr = isFemale ? bmrBase - 161 : bmrBase + 5;
+
+  // Base activity multiplier by session type (assumes 90 min standard)
+  const baseMultMap = {
+    'Rest Day': 1.2,
+    'Recovery/Film': 1.3,
+    'Light Practice': 1.5,
+    'Drilling': 1.55,
+    'Cardio': 1.65,
+    'Heavy Practice': 1.75,
+    'Strength & Conditioning': 1.75,
+    'Live Wrestling': 1.8,
+  };
+  let mult = baseMultMap[trainingType] || 1.4;
+
+  // Duration adjustment (relative to 90 min baseline)
+  const durationMins = parseInt(duration) || 90;
+  const durationFactor = durationMins / 90;
+  // Only scale the active portion (mult - 1.2) by duration, keep base metabolic rate
+  if (trainingType !== 'Rest Day' && trainingType !== 'Recovery/Film') {
+    const activePortion = mult - 1.2;
+    mult = 1.2 + (activePortion * durationFactor);
+  }
+
+  // Training base multiplier (accounts for two-a-days)
+  const baseMultiplier = { moderate: 1.0, high: 1.12, elite: 1.22 };
+  const baseAdj = baseMultiplier[base] || 1.0;
+  // Only apply base multiplier on active training days
+  if (trainingType !== 'Rest Day' && trainingType !== 'Recovery/Film') {
+    const activePortion = mult - 1.2;
+    mult = 1.2 + (activePortion * baseAdj);
+  }
+
+  return { bmr: Math.round(bmr), tdee: Math.round(bmr * mult), mult };
+}
+
+function calcWaterOz(profile, trainingType) {
+  const weight = parseFloat(profile.weight) || 0;
+  const isFemale = (profile.sex || 'male') === 'female';
+  const base = isFemale ? 0.55 : 0.6;
+
+  // Hydration bonus by training intensity
+  const hydrationBonus = {
+    'Rest Day': 0,
+    'Recovery/Film': 0,
+    'Light Practice': 8,
+    'Drilling': 8,
+    'Cardio': 16,
+    'Strength & Conditioning': 16,
+    'Heavy Practice': 24,
+    'Live Wrestling': 24,
+  };
+
+  // Duration scaling for water (every 30 min over 90 adds ~4 oz)
+  const durationMins = parseInt(profile.duration) || 90;
+  const durationBonus = trainingType !== 'Rest Day' && trainingType !== 'Recovery/Film'
+    ? Math.max(0, Math.round(((durationMins - 90) / 30) * 4))
+    : 0;
+
+  // Two-a-day bonus
+  const twoADayBonus = (profile.base === 'high' || profile.base === 'elite')
+    && trainingType !== 'Rest Day' ? 8 : 0;
+
+  return Math.round(weight * base + (hydrationBonus[trainingType] || 0) + durationBonus + twoADayBonus);
+}
+
 // ---- PLAN ----
 function renderPlan() {
   const { weight, height, age, weightClass } = state.profile;
@@ -1163,26 +1300,34 @@ function renderPlan() {
     .sort((a, b) => new Date(a.date) - new Date(b.date))[0];
   const daysToComp = nextComp ? Math.ceil((new Date(nextComp.date) - new Date()) / 86400000) : null;
 
-  subtitle.textContent = `${today} · ${todayTraining}${nextComp ? ` · ${daysToComp}d to ${nextComp.name || 'next comp'}` : ''}`;
+  const liveWeightNote = liveWeight && liveWeight !== parseFloat(weight)
+    ? ` · Live weight: ${liveWeight} lbs` : '';
+  const durationLabel = state.profile.duration ? `${state.profile.duration} min` : '90 min';
+  const baseLabel = { moderate: '1x/day', high: '2x/day', elite: 'Elite' }[state.profile.base] || '';
+  subtitle.textContent = `${today} · ${todayTraining} · ${durationLabel}${baseLabel ? ' · ' + baseLabel : ''}${liveWeightNote}${nextComp ? ' · ' + daysToComp + 'd to ' + (nextComp.name || 'next comp') : ''}`;
 
   const sex = state.profile.sex || 'male';
   const isFemale = sex === 'female';
   const cyclePhase = state.profile.cyclephase || '';
 
   // Mifflin-St Jeor BMR (sex-accurate)
-  const bmrBase = (10 * parseFloat(weight) * 0.453592) + (6.25 * parseFloat(height) * 2.54) - (5 * parseFloat(age));
-  const bmr = isFemale ? bmrBase - 161 : bmrBase + 5;
+  // Use most recent logged AM weight as live cut-tracking weight
+  const recentWeights = Object.entries(state.weightLog)
+    .sort((a, b) => b[0].localeCompare(a[0]))
+    .slice(0, 7);
+  const latestAM = recentWeights.find(([, v]) => v && v.am);
+  const liveWeight = latestAM ? latestAM[1].am : null;
+  const effectiveWeight = liveWeight || parseFloat(weight);
 
-  const multMap = { 'Rest Day':1.2,'Recovery/Film':1.3,'Light Practice':1.5,'Drilling':1.55,'Cardio':1.65,'Heavy Practice':1.75,'Strength & Conditioning':1.75,'Live Wrestling':1.8 };
-  const mult = multMap[todayTraining] || 1.4;
-  const tdee = Math.round(bmr * mult);
+  const { bmr, tdee } = calcTDEE(state.profile, todayTraining, effectiveWeight);
+  const waterOz = calcWaterOz(state.profile, todayTraining);
 
   // Cycle phase caloric adjustment
   const cycleCalAdj = (isFemale && cyclePhase === 'luteal') ? 200
     : (isFemale && cyclePhase === 'menstrual') ? 100 : 0;
 
   const cutPerDay = (daysToComp && nextComp && nextComp.targetWeight)
-    ? Math.max(0, (parseFloat(weight) - parseFloat(nextComp.targetWeight)) / Math.max(1, daysToComp))
+    ? Math.max(0, (effectiveWeight - parseFloat(nextComp.targetWeight)) / Math.max(1, daysToComp))
     : 0;
 
   // Women cut more conservatively — max 300 kcal deficit (vs 500 for men)
@@ -1191,7 +1336,6 @@ function renderPlan() {
 
   // Women need slightly less protein per lb but more iron-rich foods
   const proteinPerLb = isFemale ? 0.75 : 0.8;
-  const waterOz = Math.round(parseFloat(weight) * (isFemale ? 0.55 : 0.6) + (['Heavy Practice','Live Wrestling'].includes(todayTraining) ? 20 : 0));
   const protein = Math.round(parseFloat(weight) * proteinPerLb);
 
   // Luteal phase: shift more cals to carbs for cravings/energy
@@ -1293,7 +1437,15 @@ function renderPlan() {
     { time:'Evening', amount:'Remainder', note:'Stop 1 hr before bed' },
   ];
 
+  const liveWeightBanner = liveWeight && liveWeight !== parseFloat(weight) ? `
+    <div class="supp-alert supp-alert-info" style="margin-bottom:16px">
+      📍 <strong>Live weight active:</strong> Daily plan is based on your most recent logged morning weight of <strong>${liveWeight} lbs</strong>
+      (${(liveWeight - parseFloat(weight)).toFixed(1) > 0 ? '+' : ''}${(liveWeight - parseFloat(weight)).toFixed(1)} lbs from profile weight of ${weight} lbs).
+      Cut pace and calorie targets have been recalculated automatically.
+    </div>` : '';
+
   content.innerHTML = `
+    ${liveWeightBanner}
     ${cycleInfo ? `<div class="supp-alert" style="background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);color:var(--text-primary);margin-bottom:16px;font-size:13px">
       <span style="font-size:16px;margin-right:8px">${cycleInfo.icon}</span><strong style="color:${cycleInfo.color}">Cycle Phase Guidance</strong> — ${cycleInfo.msg}
     </div>` : ''}
@@ -1914,15 +2066,12 @@ function renderNutrition() {
   const todayTraining = state.schedule[today] || 'Rest Day';
   const sex = state.profile.sex || 'male';
   const isFemale = sex === 'female';
-  const bmrBase = (10 * parseFloat(weight) * 0.453592) + (6.25 * parseFloat(height) * 2.54) - (5 * parseFloat(age));
-  const bmr = isFemale ? bmrBase - 161 : bmrBase + 5;
-  const multMap = { 'Rest Day':1.2,'Recovery/Film':1.3,'Light Practice':1.5,'Drilling':1.55,'Cardio':1.65,'Heavy Practice':1.75,'Strength & Conditioning':1.75,'Live Wrestling':1.8 };
-  const mult = multMap[todayTraining] || 1.4;
+  const { tdee } = calcTDEE(state.profile, todayTraining);
   const nextComp = [...state.competitions].filter(c => c.date && new Date(c.date) > new Date()).sort((a,b) => new Date(a.date)-new Date(b.date))[0];
   const daysToComp = nextComp ? Math.ceil((new Date(nextComp.date) - new Date()) / 86400000) : null;
   const cutPerDay = (daysToComp && nextComp && nextComp.targetWeight) ? Math.max(0,(parseFloat(weight)-parseFloat(nextComp.targetWeight))/Math.max(1,daysToComp)) : 0;
   const maxDeficit = isFemale ? 300 : 500;
-  const cals = Math.round((bmr * mult) - Math.min(maxDeficit, cutPerDay * 180));
+  const cals = Math.round(tdee - Math.min(maxDeficit, cutPerDay * 180));
 
   const targets = {
     breakfast: Math.round(cals * 0.28),
@@ -2034,9 +2183,7 @@ function renderCalcLog() {
     const dayIdx = new Date().getDay();
     const today = DAYS[dayIdx === 0 ? 6 : dayIdx - 1];
     const todayTraining = state.schedule[today] || 'Rest Day';
-    const bmr = 66 + 6.2 * parseFloat(weight) + 12.7 * parseFloat(height) - 6.76 * parseFloat(age);
-    const multMap = { 'Rest Day':1.2,'Recovery/Film':1.3,'Light Practice':1.5,'Drilling':1.55,'Cardio':1.65,'Heavy Practice':1.75,'Strength & Conditioning':1.75,'Live Wrestling':1.8 };
-    const target = Math.round(bmr * (multMap[todayTraining] || 1.4));
+    const { tdee: target } = calcTDEE(state.profile, todayTraining);
     const diff = totalKcal - target;
     const sign = diff >= 0 ? '+' : '';
     targetStr = ` <span style="color:${diff > 100 ? 'var(--red-bright)' : diff < -100 ? 'var(--gold)' : 'var(--success)'};font-size:11px">(${sign}${diff} vs target)</span>`;
@@ -2458,12 +2605,11 @@ function getDailyTarget(dateStr) {
   const dayIdx = d.getDay();
   const dayName = DAYS[dayIdx === 0 ? 6 : dayIdx - 1];
   const todayTraining = state.schedule[dayName] || 'Rest Day';
-  const bmr = 66 + 6.2 * parseFloat(weight) + 12.7 * parseFloat(height) - 6.76 * parseFloat(age);
-  const multMap = { 'Rest Day':1.2,'Recovery/Film':1.3,'Light Practice':1.5,'Drilling':1.55,'Cardio':1.65,'Heavy Practice':1.75,'Strength & Conditioning':1.75,'Live Wrestling':1.8 };
+  const { tdee } = calcTDEE(state.profile, todayTraining);
   const nextComp = [...state.competitions].filter(c => c.date && new Date(c.date) > new Date(dateStr)).sort((a,b) => new Date(a.date)-new Date(b.date))[0];
   const daysToComp = nextComp ? Math.ceil((new Date(nextComp.date) - new Date(dateStr + 'T12:00:00')) / 86400000) : null;
   const cutPerDay = (daysToComp && nextComp && nextComp.targetWeight) ? Math.max(0,(parseFloat(weight)-parseFloat(nextComp.targetWeight))/Math.max(1,daysToComp)) : 0;
-  return Math.round((bmr * (multMap[todayTraining] || 1.4)) - Math.min(500, cutPerDay * 180));
+  return Math.round(tdee - Math.min(500, cutPerDay * 180));
 }
 
 function getLast14Days() {
@@ -2475,10 +2621,47 @@ function getLast14Days() {
     const log = calcHistory[key] || [];
     const logged = log.reduce((s, item) => s + item.kcal, 0);
     const target = getDailyTarget(key);
+    const wEntry = state.weightLog[key] || null;
+    const weightAM = wEntry ? (wEntry.am || null) : null;
+    const weightPM = wEntry ? (wEntry.pm || null) : null;
+    // Use AM as primary (official weight), fall back to PM if no AM
+    const weight = weightAM || weightPM || null;
     const label = i === 0 ? 'Today' : i === 1 ? 'Yest.' : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    days.push({ key, label, logged, target, hasData: log.length > 0 });
+    days.push({ key, label, logged, target, hasData: log.length > 0, weight });
   }
   return days;
+}
+
+function logWeight(dateKey, period, lbs) {
+  if (!lbs || isNaN(lbs)) return;
+  if (!state.weightLog[dateKey]) state.weightLog[dateKey] = {};
+  state.weightLog[dateKey][period] = parseFloat(lbs);
+  saveState();
+  renderProgress();
+}
+
+function deleteWeightEntry(dateKey, period) {
+  if (!state.weightLog[dateKey]) return;
+  if (period) {
+    delete state.weightLog[dateKey][period];
+    if (!state.weightLog[dateKey].am && !state.weightLog[dateKey].pm) {
+      delete state.weightLog[dateKey];
+    }
+  } else {
+    delete state.weightLog[dateKey];
+  }
+  saveState();
+  renderProgress();
+}
+
+// Migration: convert old flat weightLog entries to new AM/PM structure
+function migrateWeightLog() {
+  Object.keys(state.weightLog).forEach(key => {
+    const val = state.weightLog[key];
+    if (typeof val === 'number') {
+      state.weightLog[key] = { am: val };
+    }
+  });
 }
 
 function renderProgress() {
@@ -2491,9 +2674,62 @@ function renderProgress() {
   const nextComp = [...state.competitions].filter(c => c.date && new Date(c.date) > new Date()).sort((a,b) => new Date(a.date)-new Date(b.date))[0];
   const daysToComp = nextComp ? Math.ceil((new Date(nextComp.date) - new Date()) / 86400000) : null;
 
-  subtitle.textContent = daysWithData.length
-    ? `${daysWithData.length} days logged${nextComp ? ` · ${daysToComp}d to ${nextComp.name || 'competition'}` : ''}`
-    : 'Start logging food in Cal Calc to see your history here.';
+  const daysWithWeight = days.filter(d => d.weight !== null);
+  subtitle.textContent = daysWithData.length || daysWithWeight.length
+    ? `${daysWithWeight.length} weights logged · ${daysWithData.length} calorie days${nextComp ? ` · ${daysToComp}d to ${nextComp.name || 'competition'}` : ''}`
+    : 'Log your weight and food daily to track your progress here.';
+
+  // ── Daily Weight Entry ───────────────────────────────────────────────────
+  const todayEntry = state.weightLog[todayKey()] || {};
+  const todayAM = todayEntry.am || '';
+  const todayPM = todayEntry.pm || '';
+  const profileWt = parseFloat(state.profile.weight) || null;
+
+  function weightStatusLine(wt, label) {
+    if (!wt) return '';
+    const diff = profileWt ? (wt - profileWt) : null;
+    const diffStr = diff !== null ? `${diff <= 0 ? '↓' : '↑'} ${Math.abs(diff).toFixed(1)} lbs from start` : '';
+    const diffColor = diff !== null ? (diff <= 0 ? 'var(--success)' : 'var(--red-bright)') : '';
+    return `<div style="font-size:12px;color:var(--success);margin-top:4px">
+      ✓ ${label}: <strong>${wt} lbs</strong>
+      ${diffStr ? `<span style="color:${diffColor};margin-left:6px">${diffStr}</span>` : ''}
+      <button onclick="deleteWeightEntry('${todayKey()}','${label === 'Morning' ? 'am' : 'pm'}')"
+        style="background:transparent;color:var(--text-muted);font-size:11px;padding:1px 7px;border:1px solid var(--border);border-radius:4px;margin-left:8px">Remove</button>
+    </div>`;
+  }
+
+  const weightEntryHTML = `
+    <div class="weight-entry-card">
+      <div class="progress-section-title" style="margin-bottom:4px">📍 Today's Weight Log</div>
+      <p style="font-size:12px;color:var(--text-muted);margin-bottom:14px">Morning weight is your official cut-tracking weight. Evening shows daily accumulation.</p>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px">
+        <div>
+          <div style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--gold);margin-bottom:6px">🌅 Morning</div>
+          <div style="display:flex;gap:6px">
+            <input type="number" id="weight-am-input" inputmode="decimal" placeholder="lbs"
+              value="${todayAM}" step="0.1" min="50" max="400" style="flex:1" />
+            <button class="btn-log-weight" id="btn-log-am" style="padding:8px 12px">Log</button>
+          </div>
+          ${weightStatusLine(todayAM, 'Morning')}
+        </div>
+        <div>
+          <div style="font-size:11px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--text-secondary);margin-bottom:6px">🌙 Evening</div>
+          <div style="display:flex;gap:6px">
+            <input type="number" id="weight-pm-input" inputmode="decimal" placeholder="lbs"
+              value="${todayPM}" step="0.1" min="50" max="400" style="flex:1" />
+            <button class="btn-log-weight" id="btn-log-pm" style="padding:8px 12px;background:var(--bg-elevated);color:var(--text-secondary);border:1px solid var(--border)">Log</button>
+          </div>
+          ${weightStatusLine(todayPM, 'Evening')}
+          ${(todayAM && todayPM) ? `<div style="font-size:11px;color:var(--text-muted);margin-top:4px">
+            Daily swing: <strong style="color:${parseFloat(todayPM) > parseFloat(todayAM) ? 'var(--text-secondary)' : 'var(--success)'}">
+            ${(parseFloat(todayPM) - parseFloat(todayAM)).toFixed(1)} lbs</strong>
+          </div>` : ''}
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--text-muted);padding-top:8px;border-top:1px solid var(--border)">
+        💡 Weigh yourself immediately after waking (before eating/drinking) for morning weight. Evening weight is typically 2–4 lbs higher — this is normal.
+      </div>
+    </div>`;
 
   // ── Competition countdown cards ──────────────────────────────────────────
   const upcomingComps = [...state.competitions]
@@ -2610,7 +2846,101 @@ function renderProgress() {
     }).join('')}
   </div>` : '';
 
-  content.innerHTML = compHTML + histHTML + weekHTML;
+  // ── Weight chart ───────────────────────────────────────────────────────
+  const daysWithWeightData = days.filter(d => d.weight !== null);
+  const nextCompForWeight = nextComp;
+
+  let weightChartHTML = '';
+  if (daysWithWeightData.length > 0) {
+    const weights = days.map(d => d.weight).filter(w => w !== null);
+    const maxW = Math.max(...weights, parseFloat(state.profile.weight) || 0);
+    const minW = Math.min(...weights) - 2;
+    const range = maxW - minW || 1;
+    const startW = parseFloat(state.profile.weight) || null;
+
+    // Trend calculation (linear regression)
+    const weightedDays = days.filter(d => d.weight !== null).map((d, i) => ({ i: days.indexOf(d), w: d.weight }));
+    let trendDir = '';
+    if (weightedDays.length >= 2) {
+      const first = weightedDays[0].w;
+      const last = weightedDays[weightedDays.length - 1].w;
+      const change = last - first;
+      trendDir = change < -0.5 ? `↓ ${Math.abs(change).toFixed(1)} lbs over ${weightedDays.length} days` : change > 0.5 ? `↑ ${change.toFixed(1)} lbs over ${weightedDays.length} days` : 'Holding steady';
+    }
+
+    weightChartHTML = `<div class="progress-section">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div class="progress-section-title" style="margin-bottom:0">14-Day Weight Trend</div>
+        ${trendDir ? `<span style="font-size:12px;color:var(--text-secondary)">${trendDir}</span>` : ''}
+      </div>
+      <div class="prog-legend" style="margin-bottom:10px">
+        <div class="prog-legend-item"><div class="prog-legend-dot" style="background:var(--gold)"></div> Body weight</div>
+        ${nextCompForWeight ? `<div class="prog-legend-item"><div class="prog-legend-dot" style="background:var(--red-bright)"></div> Target weight (${nextCompForWeight.targetWeight} lbs)</div>` : ''}
+        ${startW ? `<div class="prog-legend-item"><div class="prog-legend-dot" style="background:var(--text-muted)"></div> Start weight (${startW} lbs)</div>` : ''}
+      </div>
+      ${days.map(d => {
+        if (d.weight === null) return `
+          <div class="weight-chart-row">
+            <div class="weight-chart-label">${d.label}</div>
+            <div class="weight-chart-track"><div class="weight-chart-fill" style="width:0%;background:var(--bg-elevated)"></div></div>
+            <div class="weight-chart-val" style="color:var(--text-muted)">—</div>
+            <div class="weight-chart-delta"></div>
+          </div>`;
+        const entry = state.weightLog[d.key] || {};
+        const amW = entry.am || null;
+        const pmW = entry.pm || null;
+        const fillPct = Math.min(100, Math.round(((d.weight - minW) / range) * 100));
+        const pmFillPct = pmW ? Math.min(100, Math.round(((pmW - minW) / range) * 100)) : null;
+        const targetPct = (nextCompForWeight && nextCompForWeight.targetWeight)
+          ? Math.min(100, Math.round(((parseFloat(nextCompForWeight.targetWeight) - minW) / range) * 100))
+          : null;
+        const delta = startW ? (d.weight - startW) : null;
+        const deltaStr = delta !== null ? (delta >= 0 ? `+${delta.toFixed(1)}` : delta.toFixed(1)) : '';
+        const deltaColor = delta === null ? '' : delta < -0.5 ? 'var(--success)' : delta > 0.5 ? 'var(--red-bright)' : 'var(--text-muted)';
+        const barColor = (nextCompForWeight && nextCompForWeight.targetWeight && d.weight <= parseFloat(nextCompForWeight.targetWeight))
+          ? 'var(--success)' : 'var(--gold)';
+        const displayVal = amW ? `${amW}` : pmW ? `${pmW}` : d.weight;
+        const amPmLabel = amW && pmW ? `AM ${amW} / PM ${pmW}` : amW ? `AM ${amW}` : pmW ? `PM ${pmW}` : d.weight;
+        return `
+          <div class="weight-chart-row">
+            <div class="weight-chart-label">${d.label}${d.key === todayKey() ? '<span class="weight-today-badge">today</span>' : ''}</div>
+            <div class="weight-chart-track">
+              <div class="weight-chart-fill" style="width:${fillPct}%;background:${barColor}"></div>
+              ${pmFillPct ? `<div class="weight-chart-fill" style="width:${pmFillPct}%;background:var(--text-muted);opacity:0.4;position:absolute;top:0;left:0"></div>` : ''}
+              ${targetPct !== null ? `<div class="weight-chart-target" style="left:${targetPct}%"></div>` : ''}
+            </div>
+            <div class="weight-chart-val" style="font-size:11px">${amPmLabel} <span style="color:var(--text-muted)">lbs</span></div>
+            <div class="weight-chart-delta" style="color:${deltaColor}">${deltaStr}</div>
+          </div>`;
+      }).join('')}
+    </div>`;
+  } else {
+    weightChartHTML = `<div class="progress-section">
+      <div class="progress-section-title">14-Day Weight Trend</div>
+      <div class="prog-empty">No weight entries yet — log your weight above to see your trend.</div>
+    </div>`;
+  }
+
+  content.innerHTML = weightEntryHTML + compHTML + weightChartHTML + histHTML + weekHTML;
+
+  // Wire up AM/PM weight log buttons after render
+  function wireWeightBtn(btnId, inputId, period) {
+    const btn = document.getElementById(btnId);
+    const input = document.getElementById(inputId);
+    if (!btn || !input) return;
+    btn.addEventListener('click', () => {
+      const val = parseFloat(input.value);
+      if (!val || val < 50 || val > 400) {
+        input.style.borderColor = 'var(--red-bright)';
+        setTimeout(() => input.style.borderColor = '', 1500);
+        return;
+      }
+      logWeight(todayKey(), period, val);
+    });
+    input.addEventListener('keydown', e => { if (e.key === 'Enter') btn.click(); });
+  }
+  wireWeightBtn('btn-log-am', 'weight-am-input', 'am');
+  wireWeightBtn('btn-log-pm', 'weight-pm-input', 'pm');
 }
 
 // ---- WEIGH-IN PROTOCOL ----
@@ -2976,17 +3306,471 @@ function renderWeighIn() {
   content.innerHTML = statsHTML + dayBeforeHTML + weighInMorningHTML + postWeighInHTML + betweenMatchHTML + foodsHTML + scienceHTML;
 }
 
+// ---- FAQ ----
+const FAQ_DATA = [
+  {
+    icon: '⚠️',
+    title: 'Medical Disclaimer',
+    sub: 'Please read before using this app',
+    accent: true,
+    items: [
+      {
+        q: 'Important: Consult your physician before starting',
+        a: `<strong>Built for the Mat is an informational tool only and does not constitute medical advice.</strong><br><br>
+        Before starting any new diet, weight cutting protocol, supplement regimen, or significant change to your nutrition and training plan, you should:
+        <ul>
+          <li>Consult with a licensed physician or sports medicine doctor</li>
+          <li>Work with a certified sports dietitian (RD or CSSD) for personalized nutrition guidance</li>
+          <li>Inform your coach and athletic trainer of your weight management plan</li>
+          <li>Never attempt extreme weight cuts without medical supervision</li>
+        </ul>
+        Aggressive weight cutting can cause serious health risks including kidney damage, cardiac stress, heat illness, cognitive impairment, and in extreme cases, death. The NCAA, USA Wrestling, and other governing bodies have strict weight management rules specifically to protect athlete health.<br><br>
+        <strong>If you feel dizzy, experience heart palpitations, extreme weakness, confusion, or inability to urinate during a cut — stop immediately and seek medical attention.</strong>
+        <div class="faq-tip">This app uses general formulas and guidelines. Individual needs vary significantly based on health status, medications, metabolic rate, and other factors only a qualified professional can assess.</div>`
+      },
+      {
+        q: 'Are the calorie and nutrition recommendations medically approved?',
+        a: `The calculations in Built for the Mat are based on published sports science research and widely accepted formulas (Mifflin-St Jeor BMR, standard activity multipliers, ISSN protein guidelines). However:
+        <ul>
+          <li>They are <strong>estimates</strong> — individual metabolic rates vary by 15–20%</li>
+          <li>They are not a substitute for individualized assessment by a registered dietitian</li>
+          <li>Supplement recommendations are general — not all supplements are appropriate for all athletes</li>
+          <li>Female athlete nutrition is especially complex — hormonal factors, bone density, and RED-S (Relative Energy Deficiency in Sport) require specialist guidance</li>
+        </ul>
+        <div class="faq-tip">The American College of Sports Medicine recommends all competitive athletes working with weight management consult a Registered Dietitian Nutritionist (RDN) with sport experience.</div>`
+      }
+    ]
+  },
+  {
+    icon: '⚡',
+    title: 'Getting Started — Profile',
+    sub: 'Setting up your athlete profile correctly',
+    items: [
+      {
+        q: 'What information do I need to set up my profile?',
+        a: `The Profile tab is the foundation of everything. You'll need:
+        <ul>
+          <li><strong>Full name</strong> — used for display throughout the app</li>
+          <li><strong>Biological sex</strong> — male and female athletes have different BMR formulas, caloric needs, and supplement recommendations</li>
+          <li><strong>Current weight (lbs)</strong> — your weight today, not your competition weight</li>
+          <li><strong>Height (inches)</strong> — used in the BMR calculation</li>
+          <li><strong>Age</strong> — metabolic rate changes with age</li>
+          <li><strong>Wrestling style</strong> — Freestyle, Greco-Roman, Folkstyle, or All Styles</li>
+          <li><strong>Target weight class</strong> — the class you are cutting or maintaining toward</li>
+          <li><strong>Training base</strong> — how many practices per day you typically do</li>
+          <li><strong>Practice length</strong> — your typical session duration in minutes</li>
+        </ul>
+        <div class="faq-tip">The more accurately you fill in your profile, the more accurate your daily calorie and water targets will be. Update your current weight regularly as your cut progresses.</div>`
+      },
+      {
+        q: 'What is the Menstrual Cycle Phase field and why does it matter?',
+        a: `This field appears for female athletes and is entirely optional. The menstrual cycle has significant effects on nutrition needs, energy levels, and weight management:
+        <ul>
+          <li><strong>Menstrual (Days 1–5):</strong> Higher iron needs due to blood loss. Fatigue is common and normal. +100 kcal added to daily target.</li>
+          <li><strong>Follicular (Days 6–14):</strong> Peak energy and carb tolerance. Best window for intense training and aggressive cuts.</li>
+          <li><strong>Ovulation (Days 14–16):</strong> Peak strength and power. Best competition simulation window.</li>
+          <li><strong>Luteal (Days 15–28):</strong> Higher caloric needs (+200 kcal), water retention is normal (not fat), increased carb cravings. Avoid aggressive cuts this week.</li>
+        </ul>
+        <div class="faq-tip">Water retention during the luteal phase can make the scale read 2–4 lbs heavier even with no change in body composition. Timing competitions outside the luteal phase when possible reduces this complication.</div>`
+      },
+      {
+        q: 'How do I calculate my BMR and what does it mean?',
+        a: `BMR (Basal Metabolic Rate) is the number of calories your body burns at complete rest — just to keep your organs functioning. Built for the Mat calculates it using the <strong>Mifflin-St Jeor formula</strong>, which is the most validated formula for athletes:
+        <ul>
+          <li><strong>Male:</strong> (10 × weight_kg) + (6.25 × height_cm) - (5 × age) + 5</li>
+          <li><strong>Female:</strong> (10 × weight_kg) + (6.25 × height_cm) - (5 × age) - 161</li>
+        </ul>
+        Your actual daily calorie need (TDEE) is then calculated by multiplying BMR by an activity factor based on your training type, duration, and how many sessions per day you do.
+        <div class="faq-tip">BMR is a starting estimate. Track your actual weight change over 2–3 weeks and adjust calories up or down by 100–200 kcal if your weight isn't moving as expected.</div>`
+      }
+    ]
+  },
+  {
+    icon: '🗓',
+    title: 'Training Schedule',
+    sub: 'Setting up your weekly training plan',
+    items: [
+      {
+        q: 'How does the training schedule affect my daily plan?',
+        a: `The training type you select for each day directly changes your calorie and water targets. Here's how the activity multipliers work:
+        <ul>
+          <li><strong>Rest Day:</strong> BMR × 1.2 — minimal movement only</li>
+          <li><strong>Recovery/Film:</strong> BMR × 1.3 — light stretching, film review</li>
+          <li><strong>Light Practice:</strong> BMR × 1.5 — technique work, low intensity</li>
+          <li><strong>Drilling:</strong> BMR × 1.55 — technical drilling, moderate pace</li>
+          <li><strong>Cardio:</strong> BMR × 1.65 — conditioning runs, bike, swimming</li>
+          <li><strong>Heavy Practice / S&C:</strong> BMR × 1.75 — high intensity sessions</li>
+          <li><strong>Live Wrestling:</strong> BMR × 1.8 — full live rounds, highest calorie burn</li>
+        </ul>
+        These multipliers are then further adjusted by your practice duration and training base (1x/day, 2x/day, or Elite).
+        <div class="faq-tip">Update your schedule weekly. A planned Heavy Practice day where you actually had a light session means your real calorie burn was lower — logging food accurately on those days matters.</div>`
+      },
+      {
+        q: 'How does practice length and training base affect calculations?',
+        a: `<strong>Practice length</strong> scales the active portion of your calorie multiplier relative to a 90-minute baseline. A 3-hour practice burns significantly more than a 45-minute practice at the same intensity.
+        <br><br>
+        <strong>Training base</strong> adds a multiplier on top for two-a-day athletes:
+        <ul>
+          <li><strong>Moderate (1x/day):</strong> No additional adjustment</li>
+          <li><strong>High (2x/day):</strong> Active calorie burn increased by 12%</li>
+          <li><strong>Elite (2+ + S&C):</strong> Active calorie burn increased by 22%</li>
+        </ul>
+        <div class="faq-tip">If you train twice a day, make sure to set your Training Base to "High" — otherwise the app will significantly underestimate your calorie needs and your cut will be too aggressive.</div>`
+      }
+    ]
+  },
+  {
+    icon: '🏆',
+    title: 'Competition Schedule',
+    sub: 'Adding events and weight goals',
+    items: [
+      {
+        q: 'How do I add a competition?',
+        a: `Go to the <strong>Competitions tab</strong> and tap "+ Add Competition." For each event you can set:
+        <ul>
+          <li><strong>Event name</strong> — e.g. "State Championships"</li>
+          <li><strong>Date</strong> — type in MM/DD/YYYY format or use the 📅 calendar button</li>
+          <li><strong>Target weight (lbs)</strong> — the weight class you're competing at</li>
+          <li><strong>Priority</strong> — A (Peak — your most important event), B (Tune-up), or C (Open tournament)</li>
+        </ul>
+        The app will show a days-out countdown for each event with color coding — red under 7 days, gold under 21 days.
+        <div class="faq-tip">Add all your competitions for the season upfront. The app uses the next upcoming competition to calculate your daily cut pace and adjust calorie targets accordingly.</div>`
+      },
+      {
+        q: 'What is competition priority and how does it affect the app?',
+        a: `Priority helps you signal which events matter most:
+        <ul>
+          <li><strong>A — Peak:</strong> Your most important competition. The app factors this one most heavily into cut pacing and supplement taper (e.g. creatine shutoff 2 weeks before an A event).</li>
+          <li><strong>B — Tune-up:</strong> Important but secondary. Good dress rehearsal for your A event.</li>
+          <li><strong>C — Open:</strong> Lower stakes tournament. Good for experience but less critical for peak performance.</li>
+        </ul>
+        The competition countdown card in the Progress tab always shows your next upcoming event regardless of priority.`
+      }
+    ]
+  },
+  {
+    icon: '📊',
+    title: 'Daily Plan',
+    sub: 'Understanding your daily targets',
+    items: [
+      {
+        q: 'How is my daily calorie target calculated?',
+        a: `Your daily calorie target is calculated in four steps:
+        <ul>
+          <li><strong>Step 1 — BMR:</strong> Your resting metabolic rate using Mifflin-St Jeor</li>
+          <li><strong>Step 2 — TDEE:</strong> BMR multiplied by your training day intensity, duration, and session frequency</li>
+          <li><strong>Step 3 — Cut adjustment:</strong> A calorie deficit is applied based on how much weight you need to lose and how many days until your next competition. Max deficit is 500 kcal for males, 300 kcal for females.</li>
+          <li><strong>Step 4 — Live weight:</strong> If you've been logging your morning weight in the Progress tab, the app uses your most recent logged weight instead of your profile weight — so your targets adjust automatically as your cut progresses.</li>
+        </ul>
+        <div class="faq-tip">If your Daily Plan shows a "Live weight active" banner at the top, it means your targets are being calculated from your actual current weight, not your original starting weight. This is the most accurate mode.</div>`
+      },
+      {
+        q: 'How is my daily water intake calculated?',
+        a: `Water targets are calculated based on:
+        <ul>
+          <li><strong>Base:</strong> 0.6 oz per pound of body weight (0.55 oz for female athletes)</li>
+          <li><strong>Training intensity bonus:</strong> Light Practice/Drilling +8 oz · Cardio/S&C +16 oz · Heavy Practice/Live Wrestling +24 oz</li>
+          <li><strong>Duration bonus:</strong> Every 30 min over 90 min adds ~4 oz</li>
+          <li><strong>Two-a-day bonus:</strong> +8 oz on active training days for High/Elite base athletes</li>
+        </ul>
+        The hydration guide on the plan page breaks this total into timing windows — wake-up, pre-practice, during, post-practice, and evening.
+        <div class="faq-tip">Urine color is the best real-time hydration indicator. Pale yellow = well hydrated. Dark yellow = drink more. Clear = overhydrated (also not ideal — can dilute electrolytes).</div>`
+      },
+      {
+        q: 'What do the macro targets mean?',
+        a: `Your daily calories are split into three macronutrients:
+        <ul>
+          <li><strong>Protein:</strong> 0.8g per lb of body weight (0.75g for female athletes). Builds and repairs muscle tissue. Critical during a cut to prevent muscle loss.</li>
+          <li><strong>Carbohydrates:</strong> ~45% of total calories (50% during luteal phase for female athletes). Primary fuel source for wrestling. Stored as glycogen in muscles and liver.</li>
+          <li><strong>Fats:</strong> ~25% of total calories. Essential for hormone production, joint health, and fat-soluble vitamin absorption.</li>
+        </ul>
+        <div class="faq-tip">During a weight cut, never drop protein — it's the macro that protects your hard-earned muscle. If calories need to be reduced, reduce carbs and fats first.</div>`
+      },
+      {
+        q: 'What is the Supplement Stack and when should I take each supplement?',
+        a: `The supplement stack adjusts daily based on your training type and days to competition:
+        <ul>
+          <li><strong>Creatine Monohydrate (3–5g):</strong> Post-practice. Increases power output and muscle recovery. Automatically suspended 7–14 days before weigh-ins to eliminate water retention.</li>
+          <li><strong>Whey Protein:</strong> Within 30 min of practice. Only recommended on heavy training days when muscle breakdown is highest.</li>
+          <li><strong>Electrolyte Mix:</strong> During/after practice. Prevents cramps and speeds rehydration. Recommended on all active training days.</li>
+          <li><strong>Magnesium Glycinate (300–400mg):</strong> Before bed. Improves sleep quality and muscle relaxation. Dose increases during luteal phase for female athletes.</li>
+          <li><strong>Vitamin D3/K2 (5000 IU/100mcg):</strong> With breakfast. Supports bone density, immunity, and hormonal health.</li>
+          <li><strong>Omega-3 Fish Oil (3g EPA+DHA):</strong> With a meal. Reduces training inflammation and supports joint health.</li>
+        </ul>
+        <div class="faq-tip">Always consult a sports dietitian before starting any supplement. Quality matters — look for NSF Certified for Sport or Informed Sport certified products to ensure they are free of banned substances.</div>`
+      }
+    ]
+  },
+  {
+    icon: '🍽',
+    title: 'Nutrition & Meal Recommendations',
+    sub: 'Using the meal guide effectively',
+    items: [
+      {
+        q: 'How are meal recommendations personalized to me?',
+        a: `The Nutrition tab shows real recipes organized by meal type — breakfast, lunch, dinner, and snacks. The calorie target for each meal category is scaled to your daily total:
+        <ul>
+          <li>Breakfast: ~28% of daily calories</li>
+          <li>Lunch: ~32% of daily calories</li>
+          <li>Dinner: ~30% of daily calories</li>
+          <li>Snacks: ~10% of daily calories</li>
+        </ul>
+        Each recipe card shows a "+/- vs target" indicator so you can see how close each option is to the meal target. A gold tag on each card shows the performance purpose (e.g. "High Carb · Pre-Practice" or "Anti-Inflammatory · Recovery").
+        <div class="faq-tip">Tap "▸ INGREDIENTS & RECIPE" on any card to expand the full ingredient list, step-by-step instructions, and a wrestling-specific coach tip.</div>`
+      },
+      {
+        q: 'What foods should I avoid during a weight cut?',
+        a: `During an active weight cut, minimize or eliminate:
+        <ul>
+          <li><strong>High sodium foods:</strong> Cause water retention — processed foods, fast food, canned soups, soy sauce in excess</li>
+          <li><strong>Carbonated drinks:</strong> Cause bloating and temporary scale weight increase</li>
+          <li><strong>Alcohol:</strong> Dehydrates, disrupts sleep, impairs recovery, adds empty calories</li>
+          <li><strong>High-fiber vegetables on cut day:</strong> Broccoli, cauliflower, beans — increase gut content weight</li>
+          <li><strong>Dairy (if sensitive):</strong> Can cause bloating in lactose-sensitive athletes</li>
+          <li><strong>Fried and high-fat foods:</strong> Slow gastric emptying, cause sluggishness</li>
+          <li><strong>Artificial sweeteners:</strong> Can cause digestive distress in some athletes</li>
+        </ul>
+        <div class="faq-tip">The last 24–48 hours before weigh-ins, switch to white rice, plain chicken, banana, and water. Simple, clean, and minimal gut content.</div>`
+      }
+    ]
+  },
+  {
+    icon: '🔢',
+    title: 'Calorie Calculator',
+    sub: 'Tracking your daily food intake',
+    items: [
+      {
+        q: 'How do I use the Calorie Calculator?',
+        a: `The Cal Calc tab lets you search and log individual foods to track your daily calorie intake:
+        <ul>
+          <li><strong>Search:</strong> Type any food name in the search bar and tap Search</li>
+          <li><strong>Browse by category:</strong> Tap any category button (🥩 Protein, 🌾 Carbs, etc.) to see all foods in that group</li>
+          <li><strong>Select portion:</strong> Use the dropdown to pick a household measure — "1 cup cooked", "3 oz (palm size)", "2 tbsp" — or select "Custom (grams)" to enter an exact amount</li>
+          <li><strong>Log it:</strong> Tap "+ Add to Log" — the item appears in your Today's Food Log below with kcal and macros</li>
+        </ul>
+        <div class="faq-tip">Use the hand portion guide when eating away from home: 1 palm ≈ 3 oz protein · 1 fist ≈ 1 cup carbs · 1 thumb ≈ 1 tbsp fat. Not exact but surprisingly accurate for daily tracking.</div>`
+      },
+      {
+        q: 'How does the food log compare to my daily target?',
+        a: `The Today's Food Log header shows your total logged calories with a color-coded comparison to your daily target:
+        <ul>
+          <li><strong>Green:</strong> Under target — on track for your cut</li>
+          <li><strong>Gold:</strong> Within 10% of target — good</li>
+          <li><strong>Red:</strong> Over target — may slow your cut progress</li>
+        </ul>
+        Your food log is date-stamped, so each day's entries are stored separately. You can view calorie history across the past 14 days in the Progress tab.
+        <div class="faq-tip">You don't need to log every single meal to get value from this tool. Even logging 80% of your food gives you useful data about your eating patterns and whether your cut is on pace.</div>`
+      }
+    ]
+  },
+  {
+    icon: '📈',
+    title: 'Progress Tracker',
+    sub: 'Monitoring your weight and calorie history',
+    items: [
+      {
+        q: 'How do I log my weight and why should I do it daily?',
+        a: `Go to the <strong>Progress tab</strong>. At the top you'll see the Today's Weight Log card with two inputs:
+        <ul>
+          <li><strong>🌅 Morning weight:</strong> Weigh yourself immediately after waking — before eating, drinking, or exercising. This is your official cut-tracking weight and the one the app uses to adjust your daily plan.</li>
+          <li><strong>🌙 Evening weight:</strong> Weigh before bed. Usually 2–4 lbs heavier than morning due to food, water, and digestion — this is completely normal and not fat gain.</li>
+        </ul>
+        Daily weight logging matters because:
+        <ul>
+          <li>The app uses your most recent morning weight to recalculate your cut pace and daily calorie target automatically</li>
+          <li>It catches weight loss that is too fast (> 1.5% body weight per week) or too slow</li>
+          <li>The daily swing between morning and evening weight tells you how much food/water you carry during the day</li>
+        </ul>
+        <div class="faq-tip">Weigh at the same time each day on the same scale for the most consistent data. Morning weight variation of 0.5–1.5 lbs day to day is completely normal — look at weekly trends, not daily numbers.</div>`
+      },
+      {
+        q: 'What does the 14-day weight trend chart show?',
+        a: `The weight trend chart shows your morning weight for each of the last 14 days as a horizontal bar chart:
+        <ul>
+          <li><strong>Gold bar:</strong> Current weight above competition target weight</li>
+          <li><strong>Green bar:</strong> Weight at or below competition target — on track</li>
+          <li><strong>Red vertical line:</strong> Your next competition's target weight — the goal line</li>
+          <li><strong>Delta column:</strong> Change from your starting weight (green = cutting, red = gaining)</li>
+          <li><strong>AM / PM values:</strong> Both morning and evening weights shown when logged</li>
+        </ul>
+        The trend summary above the chart shows your overall trajectory — e.g. "↓ 4.2 lbs over 9 days."`
+      },
+      {
+        q: 'What does the 14-day calorie history show?',
+        a: `Below the weight chart is a 14-day calorie history showing your logged food intake vs your daily target for each day:
+        <ul>
+          <li><strong>Green bar:</strong> Under target — cutting effectively</li>
+          <li><strong>Gold bar:</strong> Near target (within 10%)</li>
+          <li><strong>Red bar:</strong> Over target</li>
+          <li><strong>Gold vertical line:</strong> Your daily calorie target for that day</li>
+          <li><strong>+/- number:</strong> Exact difference vs target</li>
+        </ul>
+        The Weekly Summary below compares this week vs last week — showing average intake, average vs target, and how many days you hit within 10% of your goal.`
+      }
+    ]
+  },
+  {
+    icon: '⚖️',
+    title: 'Weigh-In Protocol',
+    sub: 'Day before, weigh-in day, and post weigh-in recovery',
+    items: [
+      {
+        q: 'What is the Weigh-In Protocol and when should I use it?',
+        a: `The <strong>Weigh-In tab</strong> is a complete competition-day guide covering four phases:
+        <ul>
+          <li><strong>Day Before:</strong> Meal timing, water taper, sleep protocol</li>
+          <li><strong>Weigh-In Morning:</strong> Final cut assessment, sweat protocols, scale strategy</li>
+          <li><strong>Post Weigh-In Rehydration:</strong> Minute-by-minute recovery timeline (0–120 min)</li>
+          <li><strong>Between Matches:</strong> Staying fueled and hydrated throughout a tournament</li>
+        </ul>
+        The rehydration and refueling targets are personalized — if you have a competition and target weight set in the Competitions tab, the app calculates exactly how many oz of fluid and kcal you need to recover.
+        <div class="faq-tip">Research shows that with 2+ hours between weigh-ins and competition, a structured rehydration protocol can restore 95–100% of performance. The key is starting immediately after stepping off the scale.</div>`
+      },
+      {
+        q: 'How much weight can I safely cut for weigh-ins?',
+        a: `General guidelines based on sports medicine research:
+        <ul>
+          <li><strong>Safe:</strong> Up to 3% of body weight as a same-day cut (e.g. 4.5 lbs for a 150 lb wrestler)</li>
+          <li><strong>Moderate risk:</strong> 3–5% — performance begins to be affected even after rehydration</li>
+          <li><strong>High risk:</strong> Over 5% — serious health risks, significant performance loss, not recommended</li>
+        </ul>
+        The safest approach is a gradual cut over several weeks (0.5–1.5% body weight per week) so that very little same-day cutting is needed.
+        <div class="faq-tip"><strong>Never attempt a cut exceeding 3% of body weight on the day of weigh-ins without medical supervision.</strong> The NCAA and USA Wrestling have weight management rules specifically to prevent dangerous cuts. Know and follow your governing body's rules.</div>`
+      }
+    ]
+  },
+  {
+    icon: '💡',
+    title: 'General Questions',
+    sub: 'Common questions about the app',
+    items: [
+      {
+        q: 'Will my data be saved if I close the app?',
+        a: `Yes — all your data is automatically saved to your device using browser local storage. This includes your profile, training schedule, competitions, food log history, and weight entries. The data persists as long as you:
+        <ul>
+          <li>Always open the app from the same place (home screen icon or browser bookmark)</li>
+          <li>Don't clear your browser/Safari data in device settings</li>
+          <li>Don't delete and re-add the app to your home screen</li>
+        </ul>
+        <strong>Important for iPhone users:</strong> If you added the app to your home screen via Safari, always open it from that home screen icon. Opening via Safari browser uses a separate storage location and your data won't carry over between the two.
+        <div class="faq-tip">A future update will add cloud accounts so your data syncs across devices and is never lost. For now, treat the home screen icon as your permanent app launcher.</div>`
+      },
+      {
+        q: 'The app says I need X calories but that seems too high/low. What should I do?',
+        a: `A few things to check:
+        <ul>
+          <li><strong>Is your profile weight current?</strong> If you've lost weight since setup, update it — or better yet, log daily weights in the Progress tab so the app adjusts automatically</li>
+          <li><strong>Is your training type set correctly for today?</strong> A Rest Day vs Live Wrestling is a 600+ kcal difference</li>
+          <li><strong>Is your practice duration set?</strong> A 45 min session vs 3 hours is a major difference</li>
+          <li><strong>Is your training base set correctly?</strong> Two-a-day athletes need significantly more calories than single-session athletes</li>
+        </ul>
+        If the targets still seem off after checking these, the BMR formula may be over or underestimating for your individual metabolism. Track your actual weight change over 2 weeks — if you're losing faster than expected, add 100–200 kcal. If slower, reduce by 100–200 kcal.
+        <div class="faq-tip">No algorithm replaces working with a sports dietitian who can do actual metabolic testing and adjust based on your personal data.</div>`
+      },
+      {
+        q: 'Is this app safe for junior high and youth wrestlers?',
+        a: `Built for the Mat includes weight classes and features for junior high athletes, but <strong>youth wrestlers require extra caution with weight management</strong>:
+        <ul>
+          <li>Adolescent athletes are still growing — aggressive cuts can affect growth, bone density, and development</li>
+          <li>The calorie minimums and deficit caps in this app are designed for adult athletes — younger athletes should eat at or above their TDEE in most cases</li>
+          <li>Youth weight management should always involve a parent, coach, and ideally a pediatric sports dietitian</li>
+          <li>Many youth programs and states have specific rules prohibiting aggressive cuts for wrestlers under 18</li>
+        </ul>
+        <strong>Never put a junior high or high school athlete on a calorie-restricted diet without physician approval and parental consent.</strong>`
+      },
+      {
+        q: 'How do I get the most accurate results from this app?',
+        a: `Follow this routine for best results:
+        <ul>
+          <li><strong>Daily:</strong> Log morning weight in Progress tab before eating or drinking</li>
+          <li><strong>Daily:</strong> Log evening weight before bed</li>
+          <li><strong>Daily:</strong> Log food intake in Cal Calc throughout the day or at end of day</li>
+          <li><strong>Weekly:</strong> Update your Training Schedule if it changes week to week</li>
+          <li><strong>As needed:</strong> Add competitions as they're confirmed — cut pace adjusts automatically</li>
+          <li><strong>As needed:</strong> Update profile weight if you don't use daily weight logging</li>
+        </ul>
+        The app gets smarter as you log more data. The Daily Plan becomes more accurate once you have real weight log data to work from instead of static profile weight.`
+      }
+    ]
+  }
+];
+
+function renderFAQ() {
+  const container = document.getElementById('faq-content');
+  if (!container) return;
+
+  const disclaimerHTML = `
+    <div class="faq-disclaimer">
+      <div class="faq-disclaimer-title">⚕️ Medical Disclaimer — Read First</div>
+      <div class="faq-disclaimer-text">
+        <strong>Built for the Mat is an informational tool only and does not constitute medical, dietary, or health advice.</strong>
+        Always consult a licensed physician and certified sports dietitian before starting any new diet, weight cutting protocol, supplement regimen, or significant change to your nutrition plan. Individual health needs vary — what works for one athlete may be harmful to another.
+        <br><br>
+        Weight cutting carries real health risks. If you experience dizziness, heart palpitations, confusion, extreme weakness, or inability to urinate during a cut — <strong>stop immediately and seek medical attention.</strong>
+        <br><br>
+        Youth wrestlers (under 18) should never follow aggressive weight cutting protocols without physician approval and parental consent.
+      </div>
+    </div>`;
+
+  const sectionsHTML = FAQ_DATA.map((section, sIdx) => {
+    const itemsHTML = section.items.map((item, iIdx) => {
+      const id = `faq-${sIdx}-${iIdx}`;
+      return `
+        <div class="faq-item" id="${id}">
+          <div class="faq-question" onclick="toggleFAQ('${id}')">
+            <span>${item.q}</span>
+            <span class="faq-chevron">▾</span>
+          </div>
+          <div class="faq-answer">${item.a}</div>
+        </div>`;
+    }).join('');
+
+    return `
+      <div class="faq-section">
+        <div class="faq-section-header">
+          <span class="faq-section-icon">${section.icon}</span>
+          <div>
+            <div class="faq-section-title">${section.title}</div>
+            <div class="faq-section-sub">${section.sub}</div>
+          </div>
+        </div>
+        ${itemsHTML}
+      </div>`;
+  }).join('');
+
+  const versionHTML = `
+    <div class="faq-version">
+      Built for the Mat v0.10.0 · builtforthemat.com<br>
+      For informational purposes only · Always consult a certified sports dietitian and physician<br>
+      © Built for the Mat. All rights reserved.
+    </div>`;
+
+  container.innerHTML = disclaimerHTML + sectionsHTML + versionHTML;
+}
+
+function toggleFAQ(id) {
+  const item = document.getElementById(id);
+  if (!item) return;
+  const isOpen = item.classList.contains('open');
+  // Close all open items in same section
+  item.closest('.faq-section').querySelectorAll('.faq-item.open').forEach(el => el.classList.remove('open'));
+  if (!isOpen) item.classList.add('open');
+}
+
+
 // ---- INIT ----
 loadState();
 bindProfile();
 updateAthleteDisplay();
 updateQuickStats();
+migrateWeightLog();
 renderTraining();
 renderCompetitions();
 renderNutrition();
 initCalcPage();
 renderProgress();
 renderWeighIn();
+renderFAQ();
 </script>
 </body>
 </html>
