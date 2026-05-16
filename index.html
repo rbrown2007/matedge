@@ -23,7 +23,11 @@
 <link rel="apple-touch-icon" href="icons/icon-152.png" />
 <link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192.png" />
 
-<!-- Firebase SDK v12.13.0 — config loaded from firebase-config.js (gitignored) -->
+<!-- Firebase config injected by server -->
+<script>
+  window._firebaseConfig = FIREBASE_CONFIG_PLACEHOLDER;
+</script>
+<!-- Firebase SDK v12.13.0 -->
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js';
   import { getAuth, onAuthStateChanged, signInWithEmailAndPassword,
@@ -34,20 +38,8 @@
            collection, getDocs, writeBatch }
     from 'https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js';
 
-  // Load config from external file (not committed to git)
-  let firebaseConfig = {};
-  try {
-    const resp = await fetch('/firebase-config.js');
-    if (resp.ok) {
-      const text = await resp.text();
-      const match = text.match(/export default ({[\s\S]*?});/);
-      if (match) firebaseConfig = eval('(' + match[1] + ')');
-    }
-  } catch(e) {
-    console.warn('[BFTM] Firebase config not found — auth disabled');
-  }
-
-  if (firebaseConfig.apiKey) {
+  const firebaseConfig = window._firebaseConfig;
+  if (firebaseConfig && firebaseConfig.apiKey) {
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
@@ -58,6 +50,8 @@
       signInWithPopup, signOut, sendPasswordResetEmail,
       onAuthStateChanged, doc, getDoc, setDoc, deleteDoc,
       collection, getDocs, writeBatch };
+  } else {
+    console.warn('[BFTM] Firebase config not available — auth disabled');
   }
 </script>
 
