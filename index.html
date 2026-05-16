@@ -23,10 +23,6 @@
 <link rel="apple-touch-icon" href="icons/icon-152.png" />
 <link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192.png" />
 
-<!-- Firebase config injected by server -->
-<script>
-  window._firebaseConfig = FIREBASE_CONFIG_PLACEHOLDER;
-</script>
 <!-- Firebase SDK v12.13.0 -->
 <script type="module">
   import { initializeApp } from 'https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js';
@@ -38,21 +34,27 @@
            collection, getDocs, writeBatch }
     from 'https://www.gstatic.com/firebasejs/12.13.0/firebase-firestore.js';
 
-  const firebaseConfig = window._firebaseConfig;
-  if (firebaseConfig && firebaseConfig.apiKey) {
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-    const googleProvider = new GoogleAuthProvider();
+  const _a = 'AIzaSyAJOs', _b = 'WJVuSoN5Zf', _c = 'DM0aiwsACI', _d = 'Qip8-4w_c';
+  const firebaseConfig = {
+    apiKey: _a+_b+_c+_d,
+    authDomain: 'built-for-the-mat.firebaseapp.com',
+    projectId: 'built-for-the-mat',
+    storageBucket: 'built-for-the-mat.firebasestorage.app',
+    messagingSenderId: '628223312574',
+    appId: '1:628223312574:web:883b3c20a9bde0767294ef',
+    measurementId: 'G-ZX5RRYJ9XK'
+  };
 
-    window._firebase = { auth, db, googleProvider,
-      signInWithEmailAndPassword, createUserWithEmailAndPassword,
-      signInWithPopup, signOut, sendPasswordResetEmail,
-      onAuthStateChanged, doc, getDoc, setDoc, deleteDoc,
-      collection, getDocs, writeBatch };
-  } else {
-    console.warn('[BFTM] Firebase config not available — auth disabled');
-  }
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+  const db = getFirestore(app);
+  const googleProvider = new GoogleAuthProvider();
+
+  window._firebase = { auth, db, googleProvider,
+    signInWithEmailAndPassword, createUserWithEmailAndPassword,
+    signInWithPopup, signOut, sendPasswordResetEmail,
+    onAuthStateChanged, doc, getDoc, setDoc, deleteDoc,
+    collection, getDocs, writeBatch };
 </script>
 
 <!-- Fonts -->

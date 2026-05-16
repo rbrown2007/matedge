@@ -41,29 +41,6 @@ const MIME = {
   '.css':  'text/css',
 };
 
-// Build Firebase config from environment variables
-function getFirebaseConfig() {
-  // Try env vars first (Railway production)
-  if (process.env.FIREBASE_API_KEY) {
-    return {
-      apiKey:            process.env.FIREBASE_API_KEY,
-      authDomain:        process.env.FIREBASE_AUTH_DOMAIN        || '',
-      projectId:         process.env.FIREBASE_PROJECT_ID         || '',
-      storageBucket:     process.env.FIREBASE_STORAGE_BUCKET     || '',
-      messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID || '',
-      appId:             process.env.FIREBASE_APP_ID             || '',
-      measurementId:     process.env.FIREBASE_MEASUREMENT_ID     || '',
-    };
-  }
-  // Fall back to local firebase-config.js file (local dev)
-  try {
-    const raw = fs.readFileSync(path.join(DIR, 'firebase-config.js'), 'utf8');
-    const match = raw.match(/export default\s*({[\s\S]*?});/);
-    if (match) return eval('(' + match[1] + ')');
-  } catch(e) {}
-  return null;
-}
-
 const SECURITY_HEADERS = {
   'X-Content-Type-Options': 'nosniff',
   'X-Frame-Options': 'DENY',
@@ -247,51 +224,6 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // Firebase config — served from env vars on Railway, from file locally
-  if (pathname === '/firebase-config.js') {
-    // Build config from environment variables (set these in Railway dashboard)
-    const config = {
-      apiKey:            process.env.FIREBASE_API_KEY            || '',
-      authDomain:        process.env.FIREBASE_AUTH_DOMAIN        || '',
-      projectId:         process.env.FIREBASE_PROJECT_ID        || '',
-      storageBucket:     process.env.FIREBASE_STORAGE_BUCKET    || '',
-      messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID || '',
-      appId:             process.env.FIREBASE_APP_ID            || '',
-      measurementId:     process.env.FIREBASE_MEASUREMENT_ID    || '',
-    };
-    // Fall back to local file if env vars not set (local development)
-    if (!config.apiKey) {
-      try {
-        const localConfig = fs.readFileSync(path.join(DIR, 'firebase-config.js'), 'utf8');
-        res.writeHead(200, { 'Content-Type': 'application/javascript', 'Cache-Control': 'no-cache' });
-        res.end(localConfig);
-        return;
-      } catch(e) {
-        res.writeHead(200, { 'Content-Type': 'application/javascript' });
-        res.end('export default {};');
-        return;
-      }
-    }
-    const js = `export default ${JSON.stringify(config, null, 2)};`;
-    res.writeHead(200, { 'Content-Type': 'application/javascript', 'Cache-Control': 'no-cache' });
-    res.end(js);
-    return;
-  }
-
-  // Debug endpoint — check Firebase env vars are set (remove after testing)
-  if (pathname === '/debug-firebase') {
-    const config = getFirebaseConfig();
-    sendJSON(res, 200, {
-      hasConfig: !!config,
-      hasApiKey: !!(config && config.apiKey),
-      envVarsSet: {
-        FIREBASE_API_KEY: !!process.env.FIREBASE_API_KEY,
-        FIREBASE_PROJECT_ID: !!process.env.FIREBASE_PROJECT_ID,
-        FIREBASE_APP_ID: !!process.env.FIREBASE_APP_ID,
-      }
-    });
-    return;
-  }
 
   // Legal pages
   if (pathname === '/privacy') {
@@ -333,20 +265,6 @@ const server = http.createServer(async (req, res) => {
 
   console.log(`[BFTM] Serving: ${filePath}`);
   fs.readFile(filePath, (err, data) => {
-    if (!err && (filePath.endsWith('index.html') || pathname === '/')) {
-      // Inject Firebase config into the HTML before serving
-      const config = getFirebaseConfig();
-      const configJson = config ? JSON.stringify(config) : 'null';
-      const html = data.toString().replace('FIREBASE_CONFIG_PLACEHOLDER', configJson);
-      res.writeHead(200, {
-        'Content-Type': 'text/html',
-        'Cache-Control': 'no-cache',
-        'Service-Worker-Allowed': '/',
-        ...SECURITY_HEADERS,
-      });
-      res.end(html);
-      return;
-    }
     if (err) {
       if (!pathname.includes('favicon')) console.warn(`[BFTM] File not found: ${filePath}`);
       // For blog routes, return proper 404 (don't silently serve app)
