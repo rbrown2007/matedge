@@ -750,8 +750,17 @@ let state = {
 function loadState() {
   try {
     const saved = localStorage.getItem('bftm_state');
-    if (saved) state = JSON.parse(saved);
-  } catch(e) {}
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      // Deep merge — preserve defaults for any missing keys
+      state.profile = Object.assign({}, state.profile, parsed.profile || {});
+      state.schedule = Object.assign({}, state.schedule, parsed.schedule || {});
+      state.competitions = Array.isArray(parsed.competitions) ? parsed.competitions : [];
+      state.weightLog = (parsed.weightLog && typeof parsed.weightLog === 'object') ? parsed.weightLog : {};
+    }
+  } catch(e) {
+    console.warn('Failed to load saved state:', e);
+  }
 }
 
 function saveState() {
@@ -2654,6 +2663,12 @@ function deleteWeightEntry(dateKey, period) {
 
 // Migration: convert old flat weightLog entries to new AM/PM structure
 function migrateWeightLog() {
+  // Ensure weightLog exists (may be missing in older saved states)
+  if (!state.weightLog || typeof state.weightLog !== 'object') {
+    state.weightLog = {};
+    return;
+  }
+  // Convert old flat number entries to AM/PM structure
   Object.keys(state.weightLog).forEach(key => {
     const val = state.weightLog[key];
     if (typeof val === 'number') {
