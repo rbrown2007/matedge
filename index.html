@@ -88,10 +88,15 @@
     }
     #app {
       overflow-y: auto;
-      overflow-x: hidden;
+      overflow-x: visible;
       -webkit-overflow-scrolling: touch;
       overscroll-behavior-y: none;
       height: 100%;
+    }
+    nav {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      flex-shrink: 0;
     }
   }
   input, select, textarea {
