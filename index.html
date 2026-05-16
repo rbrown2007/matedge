@@ -1099,38 +1099,538 @@ function renderPlan() {
 // ---- NUTRITION ----
 const FOOD_DB = {
   breakfast: [
-    { name: 'Oatmeal Power Bowl', desc: 'Rolled oats with banana, honey, almond butter, and chia seeds. High-carb fuel for morning practice.', kcal: 520, p: 18, c: 72, f: 16 },
-    { name: 'Eggs & Sweet Potato Hash', desc: '3 scrambled eggs, diced sweet potato, spinach, and olive oil. Balanced protein and complex carbs.', kcal: 480, p: 28, c: 44, f: 18 },
-    { name: 'Greek Yogurt Parfait', desc: 'Full-fat Greek yogurt, granola, mixed berries, and a drizzle of honey. Quick and high-protein.', kcal: 420, p: 24, c: 52, f: 10 },
-    { name: 'Whole Egg Omelette', desc: '4-egg omelette with cheese, peppers, onions, and turkey. Side of whole grain toast.', kcal: 560, p: 38, c: 28, f: 28 },
-    { name: 'Protein Pancakes', desc: 'Banana-oat pancakes with whey protein mixed in. Top with peanut butter and maple syrup.', kcal: 490, p: 32, c: 58, f: 12 },
-    { name: 'Avocado Toast & Eggs', desc: 'Two slices whole grain bread, smashed avocado, 2 poached eggs, and everything bagel seasoning.', kcal: 460, p: 22, c: 38, f: 24 },
+    {
+      name: 'Oatmeal Power Bowl',
+      kcal: 540, p: 22, c: 74, f: 16,
+      tag: 'High Carb · Pre-Practice',
+      ingredients: [
+        '1 cup rolled oats (dry)',
+        '1 medium banana, sliced',
+        '2 tbsp almond butter',
+        '1 tbsp honey',
+        '1 tbsp chia seeds',
+        '1 cup whole milk (or oat milk)',
+      ],
+      steps: [
+        'Cook oats in milk over medium heat for 5 min, stirring frequently.',
+        'Transfer to bowl and top with banana slices, almond butter, honey, and chia seeds.',
+        'Optional: add a pinch of cinnamon or a scoop of protein powder.',
+      ],
+      tip: 'Best eaten 90 min before morning practice for sustained energy.',
+    },
+    {
+      name: 'Eggs & Sweet Potato Hash',
+      kcal: 490, p: 30, c: 42, f: 20,
+      tag: 'Balanced · Any Day',
+      ingredients: [
+        '3 large eggs',
+        '1 medium sweet potato, diced small',
+        '2 cups fresh spinach',
+        '1/4 cup diced onion',
+        '1 tbsp olive oil',
+        'Salt, pepper, garlic powder to taste',
+      ],
+      steps: [
+        'Heat olive oil in a skillet over medium-high. Add diced sweet potato and cook 8–10 min until golden.',
+        'Add onion, cook 2 more minutes. Add spinach and toss until wilted.',
+        'Push veggies aside, crack eggs in and scramble to your liking.',
+        'Combine everything and season well.',
+      ],
+      tip: 'Meal prep the sweet potato hash ahead and reheat — saves 10 minutes on busy mornings.',
+    },
+    {
+      name: 'Greek Yogurt Parfait',
+      kcal: 430, p: 28, c: 50, f: 11,
+      tag: 'Quick · High Protein',
+      ingredients: [
+        '1.5 cups plain Greek yogurt (2% fat)',
+        '1/3 cup granola',
+        '1/2 cup mixed berries (fresh or frozen/thawed)',
+        '1 tbsp honey',
+        '1 tbsp hemp seeds',
+      ],
+      steps: [
+        'Layer yogurt in a bowl or jar.',
+        'Top with granola, berries, hemp seeds, and drizzle honey.',
+        'Eat immediately or refrigerate overnight as a parfait jar.',
+      ],
+      tip: 'Add a scoop of vanilla protein powder to the yogurt to boost protein by 20–25g.',
+    },
+    {
+      name: 'Protein Pancakes',
+      kcal: 510, p: 36, c: 54, f: 13,
+      tag: 'High Protein · Weekend Meal',
+      ingredients: [
+        '1 medium banana, mashed',
+        '2 large eggs',
+        '1/2 cup rolled oats',
+        '1 scoop vanilla whey protein (30g)',
+        '1/4 tsp baking powder',
+        '2 tbsp peanut butter (topping)',
+        '1 tbsp maple syrup (topping)',
+      ],
+      steps: [
+        'Blend banana, eggs, oats, protein powder, and baking powder until smooth.',
+        'Heat a non-stick pan over medium-low. Pour 1/4 cup batter per pancake.',
+        'Cook 2–3 min per side until bubbles form and edges look set.',
+        'Top with peanut butter and maple syrup.',
+      ],
+      tip: 'Makes 4–5 small pancakes. Batter keeps in the fridge for 24 hours.',
+    },
+    {
+      name: 'Avocado Toast & Poached Eggs',
+      kcal: 470, p: 24, c: 36, f: 26,
+      tag: 'Healthy Fats · Recovery',
+      ingredients: [
+        '2 slices whole grain bread, toasted',
+        '1 ripe avocado',
+        '2 large eggs',
+        '1 tsp lemon juice',
+        'Red pepper flakes, everything bagel seasoning',
+        'Salt and black pepper',
+      ],
+      steps: [
+        'Mash avocado with lemon juice, salt, and pepper. Spread on toast.',
+        'Bring a small pot of water to a gentle simmer. Add a splash of white vinegar.',
+        'Crack each egg into a small cup and slide gently into water. Poach 3 min.',
+        'Place eggs on toast, season with spice blend and red pepper flakes.',
+      ],
+      tip: 'Add smoked salmon (2 oz) for an extra 13g protein and omega-3s.',
+    },
+    {
+      name: 'Turkey & Veggie Omelette',
+      kcal: 480, p: 40, c: 14, f: 28,
+      tag: 'High Protein · Low Carb',
+      ingredients: [
+        '4 large eggs',
+        '2 oz sliced deli turkey',
+        '1/4 cup diced bell pepper',
+        '2 tbsp diced onion',
+        '1/4 cup shredded cheddar cheese',
+        '1 tsp olive oil',
+        'Salt, pepper, hot sauce',
+      ],
+      steps: [
+        'Whisk eggs with salt and pepper.',
+        'Heat oil in a non-stick skillet over medium. Sauté peppers and onions 2 min.',
+        'Pour in eggs and cook until edges set. Add turkey and cheese to one half.',
+        'Fold omelette in half, cover 1 min to melt cheese. Serve with hot sauce.',
+      ],
+      tip: 'Pair with 1–2 slices of whole grain toast to add 30–40g carbs on heavy training days.',
+    },
   ],
   lunch: [
-    { name: 'Chicken Rice Bowl', desc: 'Grilled chicken breast over white rice with roasted broccoli, sesame oil, and soy sauce.', kcal: 620, p: 52, c: 68, f: 12 },
-    { name: 'Turkey & Avocado Wrap', desc: 'Whole wheat tortilla, sliced turkey, avocado, romaine, tomato, and mustard. Side of fruit.', kcal: 540, p: 38, c: 48, f: 18 },
-    { name: 'Salmon & Quinoa', desc: 'Baked salmon fillet over quinoa with roasted asparagus and lemon-dill dressing.', kcal: 580, p: 46, c: 42, f: 20 },
-    { name: 'Beef & Veggie Stir Fry', desc: 'Lean ground beef with mixed vegetables over jasmine rice. Light soy-ginger sauce.', kcal: 640, p: 44, c: 72, f: 16 },
-    { name: 'Tuna Pasta', desc: 'Whole grain pasta tossed with canned tuna, olive oil, cherry tomatoes, capers, and spinach.', kcal: 560, p: 42, c: 62, f: 14 },
-    { name: 'Burrito Bowl', desc: 'Brown rice, black beans, grilled chicken, salsa, Greek yogurt (instead of sour cream), and guac.', kcal: 660, p: 48, c: 74, f: 18 },
+    {
+      name: 'Grilled Chicken Rice Bowl',
+      kcal: 630, p: 54, c: 66, f: 14,
+      tag: 'Staple · High Protein',
+      ingredients: [
+        '6 oz chicken breast',
+        '1 cup white rice (cooked)',
+        '1 cup broccoli florets',
+        '1 tbsp sesame oil',
+        '2 tbsp low-sodium soy sauce',
+        '1 tsp fresh ginger, grated',
+        '1 clove garlic, minced',
+        'Sesame seeds to garnish',
+      ],
+      steps: [
+        'Season chicken with salt, pepper, and garlic. Grill or pan-sear 6 min per side until cooked through. Let rest 5 min, then slice.',
+        'Steam or roast broccoli until tender-crisp (8 min at 400°F).',
+        'Mix soy sauce, sesame oil, ginger, and garlic for sauce.',
+        'Assemble bowl: rice, chicken, broccoli. Drizzle sauce and top with sesame seeds.',
+      ],
+      tip: 'Meal prep 3–4 portions at once. Keeps in the fridge for 4 days.',
+    },
+    {
+      name: 'Turkey Avocado Wrap',
+      kcal: 550, p: 40, c: 44, f: 20,
+      tag: 'Quick · On-the-Go',
+      ingredients: [
+        '1 large whole wheat tortilla (10")',
+        '4 oz sliced deli turkey (low sodium)',
+        '1/2 avocado, sliced',
+        '1 cup romaine lettuce',
+        '2 slices tomato',
+        '1 tbsp Dijon mustard',
+        '1 tbsp Greek yogurt (replaces mayo)',
+        '1 medium apple (side)',
+      ],
+      steps: [
+        'Spread mustard and Greek yogurt across the tortilla.',
+        'Layer turkey, avocado, lettuce, and tomato.',
+        'Roll tightly, slice in half diagonally.',
+        'Serve with apple on the side.',
+      ],
+      tip: 'Swap turkey for canned tuna or grilled chicken for variety. Add hot sauce for flavor without calories.',
+    },
+    {
+      name: 'Salmon & Quinoa Bowl',
+      kcal: 590, p: 48, c: 44, f: 22,
+      tag: 'Omega-3 Rich · Recovery',
+      ingredients: [
+        '5 oz salmon fillet',
+        '3/4 cup quinoa (cooked)',
+        '1 cup asparagus spears',
+        '1 tbsp olive oil',
+        '1 lemon (juice + zest)',
+        '1 tsp dried dill',
+        '1 clove garlic, minced',
+        'Salt and pepper',
+      ],
+      steps: [
+        'Preheat oven to 400°F. Season salmon with olive oil, lemon juice, dill, garlic, salt, and pepper.',
+        'Place salmon and asparagus on a sheet pan. Roast 12–14 min until salmon flakes easily.',
+        'Cook quinoa per package directions (1:2 ratio with water, 15 min).',
+        'Plate quinoa, top with salmon and asparagus. Squeeze fresh lemon over everything.',
+      ],
+      tip: 'Great source of omega-3s for joint health — especially important during heavy training weeks.',
+    },
+    {
+      name: 'Beef & Veggie Stir Fry',
+      kcal: 650, p: 46, c: 68, f: 18,
+      tag: 'High Energy · Pre-Competition',
+      ingredients: [
+        '5 oz lean sirloin, thinly sliced',
+        '1 cup jasmine rice (cooked)',
+        '1 cup broccoli florets',
+        '1/2 cup snap peas',
+        '1/2 bell pepper, sliced',
+        '2 tbsp low-sodium soy sauce',
+        '1 tsp sesame oil',
+        '1 tsp cornstarch',
+        '1 clove garlic, minced',
+        '1 tsp fresh ginger',
+      ],
+      steps: [
+        'Toss beef with cornstarch, 1 tbsp soy sauce. Marinate 10 min.',
+        'Heat a wok or large skillet over high heat. Cook beef 2–3 min until browned. Remove.',
+        'Add vegetables to same pan, stir fry 3–4 min until tender-crisp.',
+        'Return beef, add remaining soy sauce, sesame oil, garlic, and ginger. Toss 1 min.',
+        'Serve over rice.',
+      ],
+      tip: 'High-heat cooking is key — don\'t overcrowd the pan or you\'ll steam instead of stir-fry.',
+    },
+    {
+      name: 'Tuna Pasta',
+      kcal: 570, p: 44, c: 58, f: 15,
+      tag: 'Budget-Friendly · Quick',
+      ingredients: [
+        '2 oz whole grain pasta (dry)',
+        '1 can (5 oz) tuna in water, drained',
+        '1 tbsp olive oil',
+        '1 cup cherry tomatoes, halved',
+        '2 cups fresh spinach',
+        '1 tbsp capers',
+        '2 cloves garlic, minced',
+        'Red pepper flakes, lemon juice',
+      ],
+      steps: [
+        'Cook pasta per package directions. Reserve 1/4 cup pasta water before draining.',
+        'Heat olive oil in a pan, sauté garlic 1 min. Add tomatoes, cook 3 min until they burst.',
+        'Add spinach, toss until wilted. Add tuna and capers.',
+        'Add pasta and a splash of pasta water to loosen. Toss, squeeze lemon, add red pepper flakes.',
+      ],
+      tip: 'Ready in under 20 minutes. Works cold as a pasta salad the next day.',
+    },
+    {
+      name: 'Chicken Burrito Bowl',
+      kcal: 670, p: 52, c: 72, f: 18,
+      tag: 'Crowd Favorite · Balanced',
+      ingredients: [
+        '6 oz grilled chicken breast, sliced',
+        '1 cup brown rice (cooked)',
+        '1/2 cup black beans, drained and rinsed',
+        '1/2 cup corn',
+        '1/4 cup fresh salsa',
+        '1/4 avocado, sliced',
+        '2 tbsp plain Greek yogurt (instead of sour cream)',
+        '1 tbsp lime juice',
+        'Cilantro, cumin, chili powder',
+      ],
+      steps: [
+        'Season chicken with cumin, chili powder, salt. Grill or pan cook 6 min per side.',
+        'Warm black beans and corn in a small pan with cumin.',
+        'Build bowl: rice base, then chicken, beans, corn, salsa, avocado, Greek yogurt.',
+        'Squeeze lime juice over everything and top with cilantro.',
+      ],
+      tip: 'Brown rice has more fiber and nutrients than white — better for sustained energy between practices.',
+    },
   ],
   dinner: [
-    { name: 'Grilled Chicken & Sweet Potato', desc: 'Two chicken breasts, large baked sweet potato, steamed green beans, and olive oil.', kcal: 620, p: 58, c: 52, f: 14 },
-    { name: 'Lean Beef Stir Fry', desc: 'Sirloin strips with broccoli, snap peas, bell peppers, and brown rice. Teriyaki glaze.', kcal: 680, p: 52, c: 66, f: 18 },
-    { name: 'Baked Salmon & Veggies', desc: 'Salmon fillet with roasted zucchini, cherry tomatoes, and quinoa. Lemon butter finish.', kcal: 580, p: 48, c: 38, f: 24 },
-    { name: 'Turkey Meatballs & Pasta', desc: 'Lean turkey meatballs over whole grain spaghetti with marinara. Side salad with olive oil.', kcal: 720, p: 54, c: 78, f: 18 },
-    { name: 'Shrimp Fried Rice', desc: 'Large shrimp, brown rice, peas, carrots, eggs, sesame oil, and low-sodium soy sauce.', kcal: 560, p: 44, c: 62, f: 12 },
-    { name: 'Pork Tenderloin & Potatoes', desc: 'Herb-crusted pork tenderloin with roasted baby potatoes and asparagus. High protein recovery meal.', kcal: 640, p: 56, c: 48, f: 20 },
+    {
+      name: 'Grilled Chicken & Sweet Potato',
+      kcal: 620, p: 58, c: 52, f: 15,
+      tag: 'Recovery · High Protein',
+      ingredients: [
+        '8 oz chicken breast',
+        '1 large sweet potato',
+        '2 cups green beans',
+        '1 tbsp olive oil',
+        '1 tsp garlic powder',
+        '1 tsp smoked paprika',
+        'Salt, pepper, fresh lemon',
+      ],
+      steps: [
+        'Preheat oven to 425°F. Pierce sweet potato and microwave 5 min, then bake 20 min.',
+        'Rub chicken with olive oil, garlic powder, paprika, salt, and pepper.',
+        'Grill chicken 7 min per side or bake alongside sweet potato until 165°F internal.',
+        'Steam or roast green beans with olive oil and salt until tender-crisp.',
+        'Plate everything and finish with fresh lemon squeeze.',
+      ],
+      tip: 'Best post-heavy-practice meal. The sweet potato replenishes glycogen overnight.',
+    },
+    {
+      name: 'Sirloin Stir Fry & Brown Rice',
+      kcal: 680, p: 54, c: 64, f: 18,
+      tag: 'Iron-Rich · Strength',
+      ingredients: [
+        '6 oz sirloin steak, thin sliced',
+        '1 cup brown rice (cooked)',
+        '1 cup broccoli',
+        '1/2 cup snap peas',
+        '1/2 cup shredded carrots',
+        '3 tbsp teriyaki sauce (low sodium)',
+        '1 tsp sesame oil',
+        '1 tsp fresh ginger',
+      ],
+      steps: [
+        'Cook brown rice (2:1 water ratio, 35 min or use pre-cooked pouches).',
+        'Heat wok or large skillet on high. Sear beef in batches 2 min per side. Set aside.',
+        'Add sesame oil, ginger, and vegetables. Stir fry 4 min until crisp-tender.',
+        'Return beef, add teriyaki sauce, toss everything together 1 min.',
+        'Serve over brown rice.',
+      ],
+      tip: 'Red meat is high in heme iron — critical for wrestlers who train twice daily and lose iron through sweat.',
+    },
+    {
+      name: 'Baked Salmon & Roasted Veggies',
+      kcal: 580, p: 50, c: 34, f: 24,
+      tag: 'Anti-Inflammatory · Recovery',
+      ingredients: [
+        '6 oz salmon fillet',
+        '1 medium zucchini, sliced',
+        '1 cup cherry tomatoes',
+        '1/2 cup quinoa (cooked)',
+        '2 tbsp olive oil',
+        '3 cloves garlic, minced',
+        '1 lemon, sliced',
+        'Fresh dill or Italian seasoning',
+      ],
+      steps: [
+        'Preheat oven to 400°F. Line a sheet pan with foil.',
+        'Toss veggies with 1 tbsp olive oil, salt, and pepper. Spread on pan.',
+        'Place salmon on pan, drizzle remaining olive oil, top with garlic, lemon slices, and herbs.',
+        'Roast everything 18–20 min until salmon flakes and veggies are golden.',
+        'Serve over quinoa.',
+      ],
+      tip: 'Salmon\'s omega-3s reduce muscle inflammation — especially valuable after hard live wrestling sessions.',
+    },
+    {
+      name: 'Turkey Meatballs & Whole Grain Pasta',
+      kcal: 720, p: 56, c: 76, f: 18,
+      tag: 'High Carb · Pre-Competition',
+      ingredients: [
+        '6 oz ground turkey (93% lean)',
+        '2 oz whole grain spaghetti (dry)',
+        '1/2 cup marinara sauce (low sodium)',
+        '1/4 cup breadcrumbs',
+        '1 egg',
+        '2 cloves garlic, minced',
+        '1 tbsp Italian seasoning',
+        '2 cups mixed greens (side salad)',
+        '1 tbsp olive oil (dressing)',
+      ],
+      steps: [
+        'Mix turkey, breadcrumbs, egg, garlic, and seasoning. Form into 8–10 meatballs.',
+        'Bake at 400°F for 18–20 min until cooked through.',
+        'Cook pasta per package directions. Warm marinara in a saucepan.',
+        'Toss pasta with sauce, top with meatballs.',
+        'Dress greens with olive oil, lemon, and salt as side salad.',
+      ],
+      tip: 'Ideal night-before-competition meal. High in carbs to top off glycogen stores.',
+    },
+    {
+      name: 'Shrimp & Vegetable Fried Rice',
+      kcal: 560, p: 46, c: 60, f: 12,
+      tag: 'Light · Low Fat',
+      ingredients: [
+        '6 oz large shrimp, peeled and deveined',
+        '1.5 cups brown rice (cooked, day-old is best)',
+        '1/2 cup frozen peas',
+        '1/2 cup diced carrots',
+        '2 large eggs',
+        '2 tbsp low-sodium soy sauce',
+        '1 tsp sesame oil',
+        '2 green onions, sliced',
+        '1 clove garlic, minced',
+      ],
+      steps: [
+        'Heat a large skillet or wok on high. Add sesame oil, garlic, and shrimp. Cook 2 min per side until pink. Remove.',
+        'Add carrots and peas to pan, cook 2 min. Push to side.',
+        'Scramble eggs in empty side of pan. Mix with vegetables.',
+        'Add cold rice, breaking clumps. Stir fry 3–4 min until heated through.',
+        'Return shrimp, add soy sauce, toss. Top with green onions.',
+      ],
+      tip: 'Day-old rice fries much better than fresh — the drier texture prevents clumping.',
+    },
+    {
+      name: 'Herb Pork Tenderloin & Potatoes',
+      kcal: 640, p: 58, c: 46, f: 20,
+      tag: 'High Protein · Satisfying',
+      ingredients: [
+        '7 oz pork tenderloin',
+        '1.5 cups baby potatoes, halved',
+        '1 cup asparagus spears',
+        '2 tbsp olive oil',
+        '2 cloves garlic, minced',
+        '1 tsp rosemary',
+        '1 tsp thyme',
+        '1 tsp Dijon mustard',
+        'Salt, pepper',
+      ],
+      steps: [
+        'Preheat oven to 425°F. Mix olive oil, garlic, mustard, rosemary, thyme, salt, and pepper.',
+        'Coat tenderloin with herb mixture. Toss potatoes with remaining oil and season.',
+        'Place pork and potatoes on a sheet pan. Roast 20 min.',
+        'Add asparagus to pan, roast another 8–10 min until pork reaches 145°F internal.',
+        'Rest pork 5 min before slicing.',
+      ],
+      tip: 'Pork tenderloin is one of the leanest cuts of meat — comparable to chicken breast in fat content.',
+    },
   ],
   snacks: [
-    { name: 'Protein Shake', desc: 'Whey protein with milk or water. Add banana for extra carbs on hard training days.', kcal: 280, p: 30, c: 24, f: 4 },
-    { name: 'Cottage Cheese & Fruit', desc: 'Low-fat cottage cheese with pineapple or peaches. Slow-digesting casein protein, great before bed.', kcal: 220, p: 24, c: 22, f: 2 },
-    { name: 'Rice Cakes & Peanut Butter', desc: '3 rice cakes with 2 tbsp natural peanut butter. Quick carbs + healthy fats.', kcal: 300, p: 10, c: 36, f: 14 },
-    { name: 'Hard Boiled Eggs & Apple', desc: '3 hard boiled eggs and a medium apple. Portable, whole-food fuel.', kcal: 260, p: 20, c: 26, f: 10 },
-    { name: 'Greek Yogurt & Granola', desc: 'Plain Greek yogurt with a scoop of granola and mixed nuts. Post-practice recovery snack.', kcal: 320, p: 20, c: 34, f: 12 },
-    { name: 'Beef Jerky & Nuts', desc: 'Low-sodium beef jerky with a small handful of mixed nuts. High protein, travel-friendly.', kcal: 280, p: 22, c: 8, f: 18 },
-    { name: 'Banana & Almond Butter', desc: '1 large banana with 2 tbsp almond butter. Pre-practice carb and fat combo.', kcal: 300, p: 6, c: 44, f: 14 },
-    { name: 'Tuna & Crackers', desc: 'Single-serve tuna packet with whole grain crackers. Lean protein on the go.', kcal: 240, p: 26, c: 20, f: 4 },
+    {
+      name: 'Protein Shake',
+      kcal: 290, p: 32, c: 26, f: 5,
+      tag: 'Post-Practice · Quick',
+      ingredients: [
+        '1.5 scoops whey protein (45g)',
+        '1 cup whole milk or unsweetened almond milk',
+        '1 medium banana',
+        '1/2 cup ice',
+      ],
+      steps: [
+        'Add all ingredients to blender.',
+        'Blend 30 seconds until smooth.',
+        'Drink within 30 min of practice for best muscle recovery.',
+      ],
+      tip: 'Add 1 tbsp peanut butter for healthy fats and extra 100 kcal on high-burn training days.',
+    },
+    {
+      name: 'Cottage Cheese & Pineapple',
+      kcal: 220, p: 25, c: 22, f: 2,
+      tag: 'Before Bed · Casein Protein',
+      ingredients: [
+        '1 cup low-fat cottage cheese',
+        '1/2 cup canned pineapple chunks (in juice, drained)',
+        'Dash of cinnamon',
+      ],
+      steps: [
+        'Spoon cottage cheese into a bowl.',
+        'Top with pineapple and cinnamon.',
+        'Best eaten 30–60 min before bed.',
+      ],
+      tip: 'Cottage cheese is high in casein, a slow-digesting protein that feeds muscles through the night.',
+    },
+    {
+      name: 'Rice Cakes & Peanut Butter',
+      kcal: 310, p: 10, c: 38, f: 14,
+      tag: 'Pre-Practice · Quick Fuel',
+      ingredients: [
+        '3 plain rice cakes',
+        '2 tbsp natural peanut butter',
+        '1 tbsp honey (optional)',
+        '1/2 banana, sliced (optional)',
+      ],
+      steps: [
+        'Spread peanut butter evenly across rice cakes.',
+        'Add honey drizzle and banana slices if desired.',
+        'Eat 60–90 min before practice.',
+      ],
+      tip: 'Light on the stomach but delivers quick carbs and sustained energy. Good travel snack too.',
+    },
+    {
+      name: 'Hard Boiled Eggs & Apple',
+      kcal: 265, p: 22, c: 28, f: 11,
+      tag: 'Portable · Whole Food',
+      ingredients: [
+        '3 large eggs, hard boiled',
+        '1 medium apple',
+        'Salt and pepper',
+        'Hot sauce (optional)',
+      ],
+      steps: [
+        'Place eggs in cold water, bring to boil. Cover and remove from heat. Let sit 10–12 min.',
+        'Transfer to ice bath 5 min, then peel.',
+        'Season with salt, pepper, hot sauce.',
+        'Eat with apple for a complete snack.',
+      ],
+      tip: 'Batch-boil 6–8 eggs at once and refrigerate up to 1 week. One of the best cheap protein sources.',
+    },
+    {
+      name: 'Greek Yogurt & Granola',
+      kcal: 330, p: 22, c: 36, f: 12,
+      tag: 'Post-Practice · Recovery',
+      ingredients: [
+        '1 cup plain Greek yogurt (2%)',
+        '1/4 cup granola',
+        '1/4 cup mixed nuts',
+        '1/2 cup blueberries',
+        '1 tsp honey',
+      ],
+      steps: [
+        'Spoon yogurt into a bowl.',
+        'Top with granola, nuts, and blueberries.',
+        'Drizzle honey over the top.',
+      ],
+      tip: 'Blueberries are high in antioxidants which help reduce exercise-induced muscle damage.',
+    },
+    {
+      name: 'Beef Jerky & Almonds',
+      kcal: 285, p: 24, c: 8, f: 18,
+      tag: 'Travel-Friendly · High Protein',
+      ingredients: [
+        '1.5 oz low-sodium beef jerky',
+        '1 oz almonds (about 23 nuts)',
+      ],
+      steps: [
+        'No preparation needed.',
+        'Pair jerky and almonds in a snack bag for on-the-go fueling.',
+      ],
+      tip: 'Best non-perishable snack for tournaments. Check jerky labels — aim for under 400mg sodium per serving.',
+    },
+    {
+      name: 'Banana & Almond Butter',
+      kcal: 300, p: 7, c: 44, f: 14,
+      tag: 'Pre-Practice · Energy',
+      ingredients: [
+        '1 large banana',
+        '2 tbsp almond butter',
+      ],
+      steps: [
+        'Slice banana or eat whole.',
+        'Dip in or spread almond butter.',
+        'Best eaten 60–90 min before practice.',
+      ],
+      tip: 'Simple, clean, and effective. Banana provides fast carbs; almond butter slows digestion for sustained energy.',
+    },
+    {
+      name: 'Tuna & Whole Grain Crackers',
+      kcal: 250, p: 28, c: 20, f: 5,
+      tag: 'Lean · Quick Protein',
+      ingredients: [
+        '1 can (3 oz) tuna in water, drained',
+        '12 whole grain crackers',
+        '1 tsp Dijon mustard',
+        'Black pepper, lemon juice',
+      ],
+      steps: [
+        'Mix tuna with mustard, pepper, and a squeeze of lemon.',
+        'Scoop onto crackers.',
+      ],
+      tip: 'One of the best calorie-to-protein ratios available. Keep canned tuna in your bag for tournaments.',
+    },
   ]
 };
 
@@ -1141,72 +1641,92 @@ function renderNutrition() {
 
   if (!weight || !height || !age) {
     content.innerHTML = `<div class="empty-state"><div class="empty-icon">🍽</div><div class="empty-title">Complete your profile first</div><p class="empty-sub">Add weight, height, and age in the Profile tab to get personalized meal recommendations.</p></div>`;
-    subtitle.textContent = 'Meals scaled to your daily calorie target.';
+    subtitle.textContent = 'Real recipes scaled to your daily calorie target.';
     return;
   }
 
   const dayIdx = new Date().getDay();
   const today = DAYS[dayIdx === 0 ? 6 : dayIdx - 1];
   const todayTraining = state.schedule[today] || 'Rest Day';
-  const bmr = 66 + 6.2 * parseFloat(weight) + 12.7 * parseFloat(height) - 6.76 * parseFloat(age);
+  const sex = state.profile.sex || 'male';
+  const isFemale = sex === 'female';
+  const bmrBase = (10 * parseFloat(weight) * 0.453592) + (6.25 * parseFloat(height) * 2.54) - (5 * parseFloat(age));
+  const bmr = isFemale ? bmrBase - 161 : bmrBase + 5;
   const multMap = { 'Rest Day':1.2,'Recovery/Film':1.3,'Light Practice':1.5,'Drilling':1.55,'Cardio':1.65,'Heavy Practice':1.75,'Strength & Conditioning':1.75,'Live Wrestling':1.8 };
   const mult = multMap[todayTraining] || 1.4;
   const nextComp = [...state.competitions].filter(c => c.date && new Date(c.date) > new Date()).sort((a,b) => new Date(a.date)-new Date(b.date))[0];
   const daysToComp = nextComp ? Math.ceil((new Date(nextComp.date) - new Date()) / 86400000) : null;
   const cutPerDay = (daysToComp && nextComp && nextComp.targetWeight) ? Math.max(0,(parseFloat(weight)-parseFloat(nextComp.targetWeight))/Math.max(1,daysToComp)) : 0;
-  const cals = Math.round((bmr * mult) - Math.min(500, cutPerDay * 180));
+  const maxDeficit = isFemale ? 300 : 500;
+  const cals = Math.round((bmr * mult) - Math.min(maxDeficit, cutPerDay * 180));
 
-  // Scale factors: breakfast ~30%, lunch ~30%, dinner ~30%, snacks ~10%
-  const targets = { breakfast: Math.round(cals * 0.30), lunch: Math.round(cals * 0.30), dinner: Math.round(cals * 0.30), snacks: Math.round(cals * 0.10) };
+  const targets = {
+    breakfast: Math.round(cals * 0.28),
+    lunch:     Math.round(cals * 0.32),
+    dinner:    Math.round(cals * 0.30),
+    snacks:    Math.round(cals * 0.10),
+  };
 
   subtitle.textContent = `${today} · ${cals.toLocaleString()} kcal target · ${todayTraining}`;
 
   const sections = [
-    { key: 'breakfast', label: 'Breakfast', icon: '🌅', tip: 'Aim to eat within 1 hour of waking.' },
-    { key: 'lunch',     label: 'Lunch',     icon: '☀️', tip: 'Largest carb window — eat 2–3 hrs before practice.' },
-    { key: 'dinner',    label: 'Dinner',    icon: '🌙', tip: 'Protein-heavy for overnight recovery.' },
-    { key: 'snacks',    label: 'Snacks',    icon: '⚡', tip: 'Pick 1–2 based on your remaining calories.' },
+    { key: 'breakfast', label: 'Breakfast', icon: '🌅', tip: 'Eat within 1 hour of waking. Prioritize protein and complex carbs.' },
+    { key: 'lunch',     label: 'Lunch',     icon: '☀️', tip: 'Largest carb window — eat 2–3 hrs before afternoon practice.' },
+    { key: 'dinner',    label: 'Dinner',    icon: '🌙', tip: 'Protein-heavy for overnight muscle repair. Keep carbs moderate.' },
+    { key: 'snacks',    label: 'Snacks',    icon: '⚡', tip: 'Pick 1–2 options based on remaining daily calories.' },
   ];
 
-  const scaleMeal = (meal, target) => {
-    const factor = target / meal.kcal;
-    return {
-      ...meal,
-      kcal: Math.round(meal.kcal * factor),
-      p: Math.round(meal.p * factor),
-      c: Math.round(meal.c * factor),
-      f: Math.round(meal.f * factor),
-    };
+  const renderMealCard = (meal, targetKcal) => {
+    const diff = meal.kcal - targetKcal;
+    const diffStr = diff === 0 ? '' : diff > 0 ? `+${diff}` : `${diff}`;
+    const diffColor = Math.abs(diff) < 80 ? 'var(--success)' : Math.abs(diff) < 150 ? 'var(--gold)' : 'var(--text-muted)';
+    const ingredientList = meal.ingredients.map(i => `<li>${i}</li>`).join('');
+    const stepList = meal.steps.map((s,idx) => `<li><span style="color:var(--gold);font-weight:600;margin-right:6px">${idx+1}.</span>${s}</li>`).join('');
+    return `
+      <div class="meal-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
+          <div class="meal-card-name">${meal.name}</div>
+          <span style="font-size:10px;background:var(--bg-elevated);color:var(--gold);padding:2px 8px;border-radius:20px;white-space:nowrap;margin-left:8px;font-weight:600">${meal.tag}</span>
+        </div>
+        <div class="meal-card-macros" style="margin-bottom:12px">
+          <span class="meal-macro-pill pill-kcal">${meal.kcal} kcal</span>
+          <span class="meal-macro-pill pill-p">${meal.p}g protein</span>
+          <span class="meal-macro-pill pill-c">${meal.c}g carbs</span>
+          <span class="meal-macro-pill pill-f">${meal.f}g fat</span>
+          ${diffStr ? `<span style="font-size:10px;color:${diffColor};margin-left:4px">${diffStr} vs target</span>` : ''}
+        </div>
+        <details style="margin-bottom:0">
+          <summary style="font-size:12px;color:var(--text-secondary);cursor:pointer;font-weight:600;letter-spacing:0.05em;list-style:none;padding:6px 0;border-top:1px solid var(--border)">▸ INGREDIENTS & RECIPE</summary>
+          <div style="padding-top:10px">
+            <div style="font-size:11px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px">Ingredients</div>
+            <ul style="list-style:disc;padding-left:18px;font-size:12px;color:var(--text-secondary);line-height:1.7;margin-bottom:12px">${ingredientList}</ul>
+            <div style="font-size:11px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px">Instructions</div>
+            <ol style="list-style:none;padding-left:0;font-size:12px;color:var(--text-secondary);line-height:1.7;margin-bottom:12px">${stepList}</ol>
+            <div style="font-size:11px;background:rgba(201,168,76,0.08);border-left:2px solid var(--gold);padding:8px 10px;border-radius:0 4px 4px 0;color:var(--text-secondary)">
+              <strong style="color:var(--gold)">Tip:</strong> ${meal.tip}
+            </div>
+          </div>
+        </details>
+      </div>`;
   };
 
-  const renderMealCard = (meal) => `
-    <div class="meal-card">
-      <div class="meal-card-name">${meal.name}</div>
-      <div class="meal-card-desc">${meal.desc}</div>
-      <div class="meal-card-macros">
-        <span class="meal-macro-pill pill-kcal">${meal.kcal} kcal</span>
-        <span class="meal-macro-pill pill-p">${meal.p}g protein</span>
-        <span class="meal-macro-pill pill-c">${meal.c}g carbs</span>
-        <span class="meal-macro-pill pill-f">${meal.f}g fat</span>
-      </div>
-    </div>`;
-
   content.innerHTML = sections.map(s => {
-    const meals = FOOD_DB[s.key].map(m => scaleMeal(m, targets[s.key]));
+    const meals = FOOD_DB[s.key];
     return `
       <div class="meal-section">
         <div class="meal-section-header">
           <span class="meal-section-icon">${s.icon}</span>
           <span class="meal-section-title">${s.label}</span>
-          <span class="meal-section-kcal">~${targets[s.key].toLocaleString()} kcal</span>
+          <span class="meal-section-kcal">~${targets[s.key].toLocaleString()} kcal target</span>
         </div>
-        <p style="font-size:12px;color:var(--text-muted);margin-bottom:10px">${s.tip}</p>
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">${s.tip}</p>
         <div class="meal-cards">
-          ${meals.map(m => renderMealCard(m)).join('')}
+          ${meals.map(m => renderMealCard(m, targets[s.key])).join('')}
         </div>
       </div>`;
-  }).join('') + `<p class="nutrition-note">Portion sizes are estimates scaled to your daily calorie target. Actual macro values will vary by brand and preparation method. Always work with a certified sports dietitian for a personalized meal plan.</p>`;
+  }).join('') + `<p class="nutrition-note">Calorie counts are estimates based on standard ingredients. Actual values vary by brand and preparation. Always work with a certified sports dietitian for a fully personalized plan.</p>`;
 }
+
 
 // ---- CALORIE CALCULATOR ----
 // calcHistory: { 'YYYY-MM-DD': [ {name, portion, kcal, protein, carbs, fat}, ... ] }
