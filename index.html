@@ -1542,6 +1542,130 @@ function renderPlan() {
   const { bmr, tdee } = calcTDEE(state.profile, todayTraining, effectiveWeight);
   const waterOz = calcWaterOz(state.profile, todayTraining);
 
+  // ── Dynamic recommendations based on weight trajectory ─────────────────
+  const onTrackHTML = (() => {
+    if (!targetWeight || !effectiveWeight || !daysToComp) return '';
+    const overBy = effectiveWeight - targetWeight;
+    if (overBy <= 0) {
+      return `<div class="supp-alert supp-alert-info" style="margin-bottom:16px">
+        <strong style="color:var(--success)">✅ On Target</strong> — You are at or below your competition weight of ${targetWeight} lbs. Focus on maintaining energy, hydration, and performance. No additional cut needed.
+      </div>`;
+    }
+
+    const isRest = todayTraining === 'Rest Day';
+    const isLight = ['Recovery/Film', 'Light Practice'].includes(todayTraining);
+    const isLowActivity = isRest || isLight;
+    const urgency = daysToComp <= 3 ? 'critical' : daysToComp <= 7 ? 'urgent' : daysToComp <= 14 ? 'moderate' : 'planning';
+
+    let recs = [];
+
+    // Always show status
+    recs.push({
+      icon: '📍',
+      title: `${overBy.toFixed(1)} lbs over target`,
+      detail: `Current: ${effectiveWeight} lbs → Target: ${targetWeight} lbs · ${daysToComp} day${daysToComp > 1 ? 's' : ''} remaining`
+    });
+
+    // Activity recommendations based on training day type
+    if (isRest) {
+      recs.push({
+        icon: '🚶',
+        title: 'Add Active Recovery Movement',
+        detail: 'Rest day does not mean zero movement. A 30–45 min brisk walk burns 150–250 kcal and promotes metabolism without taxing recovery. Walk outdoors or on an inclined treadmill.'
+      });
+      if (overBy > 2 && daysToComp <= 7) {
+        recs.push({
+          icon: '🧘',
+          title: 'Hot Yoga or Light Sauna (15–20 min)',
+          detail: 'A single hot yoga session or brief sauna (160–180°F, 15–20 min max) can shed 0.5–1.5 lbs of water weight. Rehydrate with low-sodium fluids afterward. Never exceed 30 min without medical supervision.'
+        });
+      }
+    } else if (isLight) {
+      recs.push({
+        icon: '🏃',
+        title: 'Add 20–30 Min Conditioning',
+        detail: 'Light practice day — add a conditioning session after practice: jump rope intervals, bike, or a jog. Target an additional 200–400 kcal burn. This accelerates the cut without interfering with recovery.'
+      });
+    }
+
+    // Nutrition recommendations
+    if (urgency === 'critical') {
+      recs.push({
+        icon: '🍚',
+        title: 'Low-Residue Foods Only',
+        detail: 'Final 3 days — eat only white rice, plain chicken, banana, and water. Avoid all fiber, dairy, beans, and raw vegetables. Gut content alone weighs 2–4 lbs — minimizing it is free weight on the scale.'
+      });
+      recs.push({
+        icon: '🧂',
+        title: 'Zero Added Sodium',
+        detail: 'Eliminate all soy sauce, seasoning packets, canned foods, and processed foods. Each gram of sodium holds 3–4g of water. Check every label for hidden sodium.'
+      });
+    } else if (urgency === 'urgent') {
+      recs.push({
+        icon: '🥗',
+        title: 'Tighten Nutrition — Cut Simple Carbs',
+        detail: 'Drop sugary drinks, juice, and simple carbs. Stick to lean protein + complex carbs at meals. Keep snacking to minimum — every unlogged snack slows the cut.'
+      });
+      recs.push({
+        icon: '💧',
+        title: 'Begin Water Loading (Then Taper)',
+        detail: 'Drink 1.5–2x your normal water intake for 2–3 days, then gradually reduce. This trains your body to excrete water at a high rate — when you taper, you continue shedding water naturally. Well-researched technique used by elite combat athletes.'
+      });
+    } else if (urgency === 'moderate') {
+      recs.push({
+        icon: '📋',
+        title: 'Log Every Meal This Week',
+        detail: 'Consistent food logging catches hidden calories. Most athletes underestimate intake by 20–30%. Use the Cal Calc tab after every meal — even small snacks add up.'
+      });
+    }
+
+    // Supplement timing recommendations
+    if (daysToComp <= 14 && daysToComp > 7) {
+      recs.push({
+        icon: '💊',
+        title: 'Stop Creatine Now (If Not Already)',
+        detail: 'Creatine holds 1–3 lbs of water weight. Stopping now gives your body 7–14 days to shed that water naturally — free weight loss with minimal performance impact.'
+      });
+    }
+
+    // Sleep recommendation (always relevant during a cut)
+    if (overBy > 1) {
+      recs.push({
+        icon: '😴',
+        title: 'Prioritize 8–9 Hours of Sleep',
+        detail: 'Sleep deprivation increases cortisol (stress hormone) by up to 37%, which causes water retention and muscle breakdown. Poor sleep can add 1–2 lbs of water weight and reduce next-day training quality.'
+      });
+    }
+
+    // Two-a-day suggestion for low activity days when behind schedule
+    if (isLowActivity && overBy > 3 && daysToComp > 3) {
+      recs.push({
+        icon: '🔥',
+        title: 'Consider Adding a Session Tomorrow',
+        detail: 'You are ' + overBy.toFixed(1) + ' lbs over with ' + daysToComp + ' days remaining. If tomorrow is a training day, consider adding a morning conditioning session (30 min run, bike, or swim) to increase daily calorie burn by 300–500 kcal.'
+      });
+    }
+
+    if (recs.length <= 1) return ''; // Only status, no real recs
+
+    const color = urgency === 'critical' ? 'var(--red-bright)' : urgency === 'urgent' ? 'var(--gold)' : 'var(--text-secondary)';
+    const headerText = urgency === 'critical' ? '🚨 Critical — Competition in ' + daysToComp + ' days'
+      : urgency === 'urgent' ? '⚡ Action Needed — ' + daysToComp + ' days to weigh-ins'
+      : '📋 Recommendations — ' + daysToComp + ' days out';
+
+    return `<div style="background:var(--bg-surface);border:1px solid var(--border-accent);border-radius:var(--radius-lg);padding:16px 18px;margin-bottom:20px">
+      <div style="font-family:var(--font-display);font-size:15px;font-weight:700;color:${color};letter-spacing:0.04em;text-transform:uppercase;margin-bottom:14px">${headerText}</div>
+      ${recs.map(r => `
+        <div style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--border)">
+          <span style="font-size:18px;flex-shrink:0;padding-top:2px">${r.icon}</span>
+          <div>
+            <div style="font-size:14px;font-weight:600;color:var(--text-primary);margin-bottom:3px">${r.title}</div>
+            <div style="font-size:13px;color:var(--text-secondary);line-height:1.55">${r.detail}</div>
+          </div>
+        </div>`).join('')}
+    </div>`;
+  })();
+
   // Cycle phase caloric adjustment
   const cycleCalAdj = (isFemale && cyclePhase === 'luteal') ? 200
     : (isFemale && cyclePhase === 'menstrual') ? 100 : 0;
@@ -1731,6 +1855,7 @@ function renderPlan() {
   content.innerHTML = `
     ${cutWarningHTML}
     ${liveWeightBanner}
+    ${onTrackHTML}
     ${cycleInfo ? `<div class="supp-alert" style="background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);color:var(--text-primary);margin-bottom:16px;font-size:13px">
       <span style="font-size:16px;margin-right:8px">${cycleInfo.icon}</span><strong style="color:${cycleInfo.color}">Cycle Phase Guidance</strong> — ${cycleInfo.msg}
     </div>` : ''}
@@ -4884,4 +5009,8 @@ renderWeighIn();
 renderFAQ();
 </script>
 </body>
-</html>
+</html>function renderCalcResultsUSDA(foods, append) {
+  const container = document.getElementById('calc-results');
+  if (!append) { container.innerHTML = ''; _calcCardCounter = 0; }
+  foods.forEach(f => container.appendChild(buildCalcCard(f, true)));
+}
