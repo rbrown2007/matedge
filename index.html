@@ -3108,20 +3108,26 @@ let _calcCardCounter = 0;
 function buildCalcCard(f, isUSDA) {
   const id = ++_calcCardCounter;
 
+  // HTML-escape food names to prevent innerHTML corruption
+  function esc(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');
+  }
+
   // Determine measure dropdown options
   let measureOptions = '';
   let defaultG;
   if (!isUSDA && f.measures && f.measures.length) {
-    measureOptions = f.measures.map(m => '<option value="' + m.g + '">' + m.l + '</option>').join('');
+    measureOptions = f.measures.map(m => '<option value="' + m.g + '">' + esc(m.l) + '</option>').join('');
     defaultG = f.measures[0].g;
   } else if (!isUSDA) {
     defaultG = f.sg || 100;
-    measureOptions = '<option value="' + defaultG + '">' + (f.sl || '100g') + '</option>';
+    measureOptions = '<option value="' + defaultG + '">' + esc(f.sl || '100g') + '</option>';
   } else {
-    const sg = (f.servingSize && f.servingUnit === 'g') ? f.servingSize : 100;
-    const sl = f.servingSize ? (f.servingSize + (f.servingUnit || 'g')) : '100g';
+    const sg = f.servingSize || 100;
+    const sl = f.servingLabel || (f.servingSize ? (f.servingSize + (f.servingUnit || 'g')) : '100g');
     defaultG = sg;
-    measureOptions = '<option value="' + sg + '">' + sl + '</option>'
+    measureOptions = '<option value="' + sg + '">' + esc(sl) + '</option>'
       + '<option value="100">100 g</option>'
       + '<option value="28">1 oz (28g)</option>';
   }
@@ -3129,20 +3135,21 @@ function buildCalcCard(f, isUSDA) {
 
   const calc = isUSDA ? calcMacrosUSDA : calcMacrosForGrams;
   const im = calc(f, defaultG);
+  const safeName = esc(f.name);
 
   let brandLine;
   if (isUSDA) {
-    const naWarn = f.sodium ? ' · Na: ' + f.sodium + 'mg/100g' + (f.sodium > 400 ? ' ⚠' : '') : '';
+    const parts = [esc(f.brand), esc(f.category)].filter(Boolean).join(' · ');
     const flag = f.source === 'off' ? '🌍' : '🇺🇸';
-    brandLine = [f.brand, f.category].filter(Boolean).join(' · ') + naWarn + ' · ' + flag + ' ' + f.kcal + ' kcal/100g';
+    brandLine = parts + ' · ' + flag + ' ' + f.kcal + ' kcal/100g';
   } else {
-    brandLine = f.cat + ' · per 100g: ' + f.kcal + ' kcal · ' + f.p + 'g protein';
+    brandLine = esc(f.cat) + ' · per 100g: ' + f.kcal + ' kcal · ' + f.p + 'g protein';
   }
 
   const card = document.createElement('div');
   card.className = 'calc-result-card';
   card.innerHTML =
-    '<div class="calc-result-name">' + f.name + '</div>' +
+    '<div class="calc-result-name">' + safeName + '</div>' +
     '<div class="calc-result-brand">' + brandLine + '</div>' +
     '<div class="calc-portion-row"><select class="cc-measure" style="flex:2">' + measureOptions + '</select></div>' +
     '<div class="cc-custom" style="display:none;margin-top:6px">' +
@@ -3163,12 +3170,16 @@ function buildCalcCard(f, isUSDA) {
   const macrosDiv  = card.querySelector('.cc-macros');
   const addBtn     = card.querySelector('.cc-add');
 
+  // Safety — if any element is missing, return the card without interaction
+  if (!measureSel || !addBtn || !macrosDiv) return card;
+
   function getGrams() {
     const v = measureSel.value;
-    if (v === 'custom_g') return parseFloat(customQty.value) || 0;
-    if (v === 'custom_oz') return (parseFloat(customQty.value) || 0) * 28.3495;
+    if (v === 'custom_g') return parseFloat(customQty && customQty.value) || 0;
+    if (v === 'custom_oz') return (parseFloat(customQty && customQty.value) || 0) * 28.3495;
     return parseFloat(v) || defaultG;
   }
+
   function refresh() {
     const m = calc(f, getGrams());
     macrosDiv.innerHTML =
@@ -3177,15 +3188,21 @@ function buildCalcCard(f, isUSDA) {
       '<span class="calc-macro-pill pill-c">' + m.carbs + 'g carbs</span>' +
       '<span class="calc-macro-pill pill-f">' + m.fat + 'g fat</span>';
   }
+
   measureSel.addEventListener('change', () => {
     const v = measureSel.value;
-    customWrap.style.display = (v === 'custom_g' || v === 'custom_oz') ? 'block' : 'none';
+    if (customWrap) customWrap.style.display = (v === 'custom_g' || v === 'custom_oz') ? 'block' : 'none';
     refresh();
   });
-  customQty.addEventListener('input', refresh);
+  if (customQty) customQty.addEventListener('input', refresh);
+
   addBtn.addEventListener('click', () => {
     const g = getGrams();
-    if (!g || g <= 0) { customWrap.style.display = 'block'; customQty.focus(); return; }
+    if (!g || g <= 0) {
+      if (customWrap) customWrap.style.display = 'block';
+      if (customQty) customQty.focus();
+      return;
+    }
     const m = calc(f, g);
     const portionLabel = measureSel.options[measureSel.selectedIndex].text;
     const log = getTodayLog();
@@ -3207,13 +3224,17 @@ function renderCalcResults(foods) {
   _calcCardCounter = 0;
   const c = document.getElementById('calc-results');
   c.innerHTML = '';
-  foods.forEach(f => c.appendChild(buildCalcCard(f, false)));
+  foods.forEach(f => {
+    try { c.appendChild(buildCalcCard(f, false)); } catch(e) { console.warn('[BFTM] Card error:', f.name, e.message); }
+  });
 }
 
 function renderCalcResultsUSDA(foods, append) {
   const c = document.getElementById('calc-results');
   if (!append) { c.innerHTML = ''; _calcCardCounter = 0; }
-  foods.forEach(f => c.appendChild(buildCalcCard(f, true)));
+  foods.forEach(f => {
+    try { c.appendChild(buildCalcCard(f, true)); } catch(e) { console.warn('[BFTM] Card error:', f.name, e.message); }
+  });
 }
 
 
