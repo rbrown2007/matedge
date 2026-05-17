@@ -1542,6 +1542,10 @@ function renderPlan() {
   const { bmr, tdee } = calcTDEE(state.profile, todayTraining, effectiveWeight);
   const waterOz = calcWaterOz(state.profile, todayTraining);
 
+  const targetWeight = (nextComp && nextComp.targetWeight) ? parseFloat(nextComp.targetWeight) : null;
+  const cutRemaining = (daysToComp && targetWeight) ? Math.max(0, effectiveWeight - targetWeight) : 0;
+  const cutPerDay = daysToComp ? cutRemaining / Math.max(1, daysToComp) : 0;
+
   // ── Dynamic recommendations based on weight trajectory ─────────────────
   const onTrackHTML = (() => {
     if (!targetWeight || !effectiveWeight || !daysToComp) return '';
@@ -1669,10 +1673,6 @@ function renderPlan() {
   // Cycle phase caloric adjustment
   const cycleCalAdj = (isFemale && cyclePhase === 'luteal') ? 200
     : (isFemale && cyclePhase === 'menstrual') ? 100 : 0;
-
-  const targetWeight = (nextComp && nextComp.targetWeight) ? parseFloat(nextComp.targetWeight) : null;
-  const cutRemaining = (daysToComp && targetWeight) ? Math.max(0, effectiveWeight - targetWeight) : 0;
-  const cutPerDay = daysToComp ? cutRemaining / Math.max(1, daysToComp) : 0;
 
   // Calculate deficit needed: 1 lb fat loss requires ~3500 kcal deficit
   // So cutPerDay (lbs) * 500 kcal/lb/day is the theoretical deficit needed
@@ -3014,146 +3014,81 @@ async function searchFood(query) {
   const status = document.getElementById('calc-status');
   const results = document.getElementById('calc-results');
   const q = query.toLowerCase().trim();
-  status.innerHTML = '<span style="color:var(--text-muted)">Searching...</span>';
   results.innerHTML = '';
   hideCustomEntry();
 
-  // Always search local database first (instant results)
-  // Split query into words — match foods containing ALL words (any order)
+  // ── 1. Local DB search — render IMMEDIATELY (synchronous, instant) ──
   const words = q.split(/\s+/).filter(w => w.length > 0);
   const localMatches = FOOD_DB_SEARCH.filter(f => {
     const haystack = (f.name + ' ' + f.cat + ' ' + (f.brand || '')).toLowerCase();
     return words.every(w => haystack.includes(w));
   }).sort((a, b) => {
-    // Prioritize: exact name match > starts with > contains
-    const aName = a.name.toLowerCase();
-    const bName = b.name.toLowerCase();
-    const aExact = aName === q ? 0 : aName.startsWith(words[0]) ? 1 : 2;
-    const bExact = bName === q ? 0 : bName.startsWith(words[0]) ? 1 : 2;
-    return aExact - bExact;
+    const aName = a.name.toLowerCase(), bName = b.name.toLowerCase();
+    const aRank = aName === q ? 0 : aName.startsWith(words[0]) ? 1 : 2;
+    const bRank = bName === q ? 0 : bName.startsWith(words[0]) ? 1 : 2;
+    return aRank - bRank;
   });
 
-  // Try server proxy (USDA + Open Food Facts — 3M+ foods)
+  if (localMatches.length > 0) {
+    renderCalcResults(localMatches);
+    status.innerHTML = '<strong style="color:var(--text-primary)">' + localMatches.length + ' result' + (localMatches.length > 1 ? 's' : '') + '</strong> <span style="color:var(--text-muted)">· searching online for more...</span>';
+  } else {
+    status.innerHTML = '<span style="color:var(--text-muted)">Searching online database...</span>';
+  }
+
+  // ── 2. API search — runs after, appends below local results ──
   let apiResults = [];
   let apiSource = '';
   try {
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 8000);
-    const res = await fetch(`/api/food-search?q=${encodeURIComponent(query)}`, { signal: controller.signal });
+    const timeout = setTimeout(() => controller.abort(), 7000);
+    const res = await fetch('/api/food-search?q=' + encodeURIComponent(query), { signal: controller.signal });
     clearTimeout(timeout);
     if (res.ok) {
       const data = await res.json();
       if (data.foods && data.foods.length > 0) {
         apiResults = data.foods;
         apiSource = data.source === 'usda+off' ? 'USDA + Open Food Facts'
-          : data.source === 'usda' ? 'USDA FoodData Central'
-          : data.source === 'off' ? 'Open Food Facts'
-          : 'food database';
+          : data.source === 'usda' ? 'USDA'
+          : data.source === 'off' ? 'Open Food Facts' : 'online';
       }
     }
   } catch(e) {
-    // Server unreachable or timeout — continue with local results only
+    // Timeout or network error — local results already shown, just finalize status
   }
 
-  // Show local results first, then API results below
+  // ── 3. Finalize ──
   if (localMatches.length === 0 && apiResults.length === 0) {
-    status.innerHTML = 'No results found. <span style="color:var(--text-muted)">Try a different search term, browse categories above, or use <strong>Custom Entry</strong> to enter values from a product label.</span>';
+    status.innerHTML = 'No results found. <span style="color:var(--text-muted)">Try a different term, browse categories above, or use <strong>Custom Entry</strong> for items off a product label.</span>';
     return;
   }
 
-  let statusParts = [];
-  if (localMatches.length > 0) {
-    renderCalcResults(localMatches);
-    statusParts.push(`${localMatches.length} built-in`);
-  }
   if (apiResults.length > 0) {
     if (localMatches.length > 0) {
-      // Add a divider
       const divider = document.createElement('div');
       divider.style.cssText = 'border-top:1px solid var(--border);margin:16px 0 12px;padding-top:8px;font-size:12px;color:var(--text-muted);letter-spacing:0.06em;text-transform:uppercase';
-      divider.textContent = `🌐 ${apiResults.length} results from ${apiSource}`;
+      divider.textContent = '🌐 ' + apiResults.length + ' more from ' + apiSource;
       results.appendChild(divider);
     }
     renderCalcResultsUSDA(apiResults, true);
-    statusParts.push(`${apiResults.length} from ${apiSource || 'online'}`);
   }
-  status.innerHTML = '<strong style="color:var(--text-primary)">' + (localMatches.length + apiResults.length) + ' total results</strong> <span style="color:var(--text-muted)">(' + statusParts.join(' + ') + ')</span>';
+
+  const total = localMatches.length + apiResults.length;
+  let parts = [];
+  if (localMatches.length) parts.push(localMatches.length + ' built-in');
+  if (apiResults.length) parts.push(apiResults.length + ' from ' + (apiSource || 'online'));
+  status.innerHTML = '<strong style="color:var(--text-primary)">' + total + ' total result' + (total > 1 ? 's' : '') + '</strong> <span style="color:var(--text-muted)">(' + parts.join(' + ') + ')</span>';
 }
+
 
 // Render results from USDA proxy (normalized format)
-function renderCalcResultsUSDA(foods) {
-  const container = document.getElementById('calc-results');
-
-  container.innerHTML = foods.map((f, i) => {
-    const sg = (f.servingSize && f.servingUnit === 'g') ? f.servingSize : 100;
-    const macros = calcMacrosUSDA(f, sg);
-    const label = f.servingSize ? `${f.servingSize}${f.servingUnit}` : '100g';
-    return `
-      <div class="calc-result-card" id="calc-card-${i}">
-        <div class="calc-result-name">${f.name}</div>
-        <div class="calc-result-brand">
-          ${[f.brand, f.category].filter(Boolean).join(' · ')}
-          ${f.sodium ? `· <span style="color:${f.sodium > 400 ? 'var(--red-bright)' : 'var(--text-muted)'}">Na: ${f.sodium}mg/100g${f.sodium > 400 ? ' ⚠ high' : ''}</span>` : ''}
-          · <span style="color:var(--text-muted)">${f.source === 'off' ? '🌍' : '🇺🇸'} per 100g: ${f.kcal} kcal</span>
-        </div>
-        <div class="calc-portion-row">
-          <input type="number" id="calc-qty-${i}" value="${sg}" min="1" max="2000" step="1" inputmode="decimal" />
-          <select id="calc-unit-${i}">
-            <option value="g" selected>grams</option>
-            <option value="oz">oz (28.3g each)</option>
-            <option value="serving">serving (${label})</option>
-          </select>
-        </div>
-        <div class="calc-macros" id="calc-macros-${i}">
-          <span class="calc-macro-pill pill-kcal">${macros.kcal} kcal</span>
-          <span class="calc-macro-pill pill-p">${macros.protein}g protein</span>
-          <span class="calc-macro-pill pill-c">${macros.carbs}g carbs</span>
-          <span class="calc-macro-pill pill-f">${macros.fat}g fat</span>
-        </div>
-        <button class="calc-add-btn" data-idx="${i}">+ Add to Log</button>
-      </div>`;
-  }).join('');
-
-  foods.forEach((f, i) => {
-    const qtyInput = document.getElementById(`calc-qty-${i}`);
-    const unitSel = document.getElementById(`calc-unit-${i}`);
-    const macrosDiv = document.getElementById(`calc-macros-${i}`);
-    if (!qtyInput || !unitSel || !macrosDiv) return;
-    const defaultSG = (f.servingSize && f.servingUnit === 'g') ? f.servingSize : 100;
-
-    
-    qtyInput.addEventListener('input', updateMacros);
-    unitSel.addEventListener('change', updateMacros);
-
-    const addBtn = container.querySelector(`.calc-add-btn[data-idx="${i}"]`);
-    if (addBtn) {
-      addBtn.addEventListener('click', () => {
-        const qty = parseFloat(qtyInput.value) || 0;
-        const unit = unitSel.value;
-        let grams = unit === 'oz' ? qty * 28.3495 : unit === 'serving' ? qty * defaultSG : qty;
-        const m = calcMacrosUSDA(f, grams);
-        const unitLabel = unit === 'g' ? 'g' : unit === 'oz' ? 'oz' : ' serving(s)';
-        const todayLog = getTodayLog();
-        todayLog.push({ name: f.name, portion: `${qty}${unitLabel}`, kcal: m.kcal, protein: m.protein, carbs: m.carbs, fat: m.fat });
-        calcHistory[todayKey()] = todayLog;
-        saveCalcLog();
-        renderCalcLog();
-        if (currentTab === 'progress') renderProgress();
-        addBtn.textContent = '✓ Added!';
-        addBtn.style.color = 'var(--success)';
-        setTimeout(() => { addBtn.textContent = '+ Add to Log'; addBtn.style.color = ''; }, 1500);
-      });
-    }
-  });
-}
-
 function calcMacrosUSDA(food, grams) {
   const factor = grams / 100;
   return {
     kcal: Math.round(food.kcal * factor),
-    protein: Math.round(food.protein * factor),
-    carbs: Math.round(food.carbs * factor),
-    fat: Math.round(food.fat * factor),
+    protein: Math.round((food.protein || 0) * factor),
+    carbs: Math.round((food.carbs || 0) * factor),
+    fat: Math.round((food.fat || 0) * factor),
   };
 }
 
@@ -3161,98 +3096,124 @@ function calcMacrosForGrams(food, grams) {
   const factor = grams / 100;
   return {
     kcal: Math.round(food.kcal * factor),
-    protein: Math.round(food.p * factor),
-    carbs: Math.round(food.c * factor),
-    fat: Math.round(food.f * factor),
+    protein: Math.round((food.p || 0) * factor),
+    carbs: Math.round((food.c || 0) * factor),
+    fat: Math.round((food.f || 0) * factor),
   };
 }
 
-function renderCalcResults(foods) {
-  const container = document.getElementById('calc-results');
+// Unique counter for card element IDs
+let _calcCardCounter = 0;
 
-  container.innerHTML = foods.map((f, i) => {
-    const defaultMeasure = f.measures ? f.measures[0] : { l: f.sl, g: f.sg };
-    const macros = calcMacrosForGrams(f, defaultMeasure.g);
-    const measureOptions = f.measures
-      ? f.measures.map(m => `<option value="${m.g}">${m.l}</option>`).join('')
-      : `<option value="${f.sg}">${f.sl}</option>`;
-    return `
-      <div class="calc-result-card" id="calc-card-${i}">
-        <div class="calc-result-name">${f.name}</div>
-        <div class="calc-result-brand">${f.cat} · per 100g: ${f.kcal} kcal · ${f.p}g protein</div>
-        <div class="calc-portion-row">
-          <select id="calc-measure-${i}" style="flex:2">
-            ${measureOptions}
-            <option value="custom_g">Custom (grams)</option>
-            <option value="custom_oz">Custom (oz)</option>
-          </select>
-        </div>
-        <div id="calc-custom-${i}" style="display:none;margin-top:6px">
-          <input type="number" id="calc-custom-qty-${i}" placeholder="Enter amount" min="1" max="2000" inputmode="decimal" />
-          <p class="calc-portion-guide">1 palm ≈ 3oz protein · 1 fist ≈ 1 cup carbs · 1 thumb ≈ 1 tbsp fat</p>
-        </div>
-        <div class="calc-macros" id="calc-macros-${i}" style="margin-top:10px">
-          <span class="calc-macro-pill pill-kcal">${macros.kcal} kcal</span>
-          <span class="calc-macro-pill pill-p">${macros.protein}g protein</span>
-          <span class="calc-macro-pill pill-c">${macros.carbs}g carbs</span>
-          <span class="calc-macro-pill pill-f">${macros.fat}g fat</span>
-        </div>
-        <button class="calc-add-btn" data-idx="${i}" style="margin-top:10px">+ Add to Log</button>
-      </div>`;
-  }).join('');
+function buildCalcCard(f, isUSDA) {
+  const id = ++_calcCardCounter;
 
-  foods.forEach((f, i) => {
-    const measureSel = document.getElementById(`calc-measure-${i}`);
-    const customWrap = document.getElementById(`calc-custom-${i}`);
-    const customQty = document.getElementById(`calc-custom-qty-${i}`);
-    const macrosDiv = document.getElementById(`calc-macros-${i}`);
-    if (!measureSel || !macrosDiv) return;
+  // Determine measure dropdown options
+  let measureOptions = '';
+  let defaultG;
+  if (!isUSDA && f.measures && f.measures.length) {
+    measureOptions = f.measures.map(m => '<option value="' + m.g + '">' + m.l + '</option>').join('');
+    defaultG = f.measures[0].g;
+  } else if (!isUSDA) {
+    defaultG = f.sg || 100;
+    measureOptions = '<option value="' + defaultG + '">' + (f.sl || '100g') + '</option>';
+  } else {
+    const sg = (f.servingSize && f.servingUnit === 'g') ? f.servingSize : 100;
+    const sl = f.servingSize ? (f.servingSize + (f.servingUnit || 'g')) : '100g';
+    defaultG = sg;
+    measureOptions = '<option value="' + sg + '">' + sl + '</option>'
+      + '<option value="100">100 g</option>'
+      + '<option value="28">1 oz (28g)</option>';
+  }
+  measureOptions += '<option value="custom_g">Custom (grams)</option><option value="custom_oz">Custom (oz)</option>';
 
-    function getGrams() {
-      const val = measureSel.value;
-      if (val === 'custom_g') return parseFloat(customQty?.value) || 0;
-      if (val === 'custom_oz') return (parseFloat(customQty?.value) || 0) * 28.3495;
-      return parseFloat(val) || f.sg;
-    }
+  const calc = isUSDA ? calcMacrosUSDA : calcMacrosForGrams;
+  const im = calc(f, defaultG);
 
-    function updateMacros() {
-      const grams = getGrams();
-      const m = calcMacrosForGrams(f, grams);
-      macrosDiv.innerHTML = `
-        <span class="calc-macro-pill pill-kcal">${m.kcal} kcal</span>
-        <span class="calc-macro-pill pill-p">${m.protein}g protein</span>
-        <span class="calc-macro-pill pill-c">${m.carbs}g carbs</span>
-        <span class="calc-macro-pill pill-f">${m.fat}g fat</span>`;
-    }
+  let brandLine;
+  if (isUSDA) {
+    const naWarn = f.sodium ? ' · Na: ' + f.sodium + 'mg/100g' + (f.sodium > 400 ? ' ⚠' : '') : '';
+    const flag = f.source === 'off' ? '🌍' : '🇺🇸';
+    brandLine = [f.brand, f.category].filter(Boolean).join(' · ') + naWarn + ' · ' + flag + ' ' + f.kcal + ' kcal/100g';
+  } else {
+    brandLine = f.cat + ' · per 100g: ' + f.kcal + ' kcal · ' + f.p + 'g protein';
+  }
 
-    measureSel.addEventListener('change', () => {
-      const isCustom = measureSel.value.startsWith('custom');
-      customWrap.style.display = isCustom ? 'block' : 'none';
-      if (!isCustom) updateMacros();
-    });
+  const card = document.createElement('div');
+  card.className = 'calc-result-card';
+  card.innerHTML =
+    '<div class="calc-result-name">' + f.name + '</div>' +
+    '<div class="calc-result-brand">' + brandLine + '</div>' +
+    '<div class="calc-portion-row"><select class="cc-measure" style="flex:2">' + measureOptions + '</select></div>' +
+    '<div class="cc-custom" style="display:none;margin-top:6px">' +
+      '<input type="number" class="cc-customqty" placeholder="Enter amount" min="1" max="2000" inputmode="decimal" />' +
+      '<p class="calc-portion-guide">1 palm ≈ 3oz protein · 1 fist ≈ 1 cup carbs · 1 thumb ≈ 1 tbsp fat</p>' +
+    '</div>' +
+    '<div class="calc-macros cc-macros" style="margin-top:10px">' +
+      '<span class="calc-macro-pill pill-kcal">' + im.kcal + ' kcal</span>' +
+      '<span class="calc-macro-pill pill-p">' + im.protein + 'g protein</span>' +
+      '<span class="calc-macro-pill pill-c">' + im.carbs + 'g carbs</span>' +
+      '<span class="calc-macro-pill pill-f">' + im.fat + 'g fat</span>' +
+    '</div>' +
+    '<button class="calc-add-btn cc-add" style="margin-top:10px">+ Add to Log</button>';
 
-    customQty?.addEventListener('input', updateMacros);
+  const measureSel = card.querySelector('.cc-measure');
+  const customWrap = card.querySelector('.cc-custom');
+  const customQty  = card.querySelector('.cc-customqty');
+  const macrosDiv  = card.querySelector('.cc-macros');
+  const addBtn     = card.querySelector('.cc-add');
 
-    const addBtn = container.querySelector(`.calc-add-btn[data-idx="${i}"]`);
-    if (addBtn) {
-      addBtn.addEventListener('click', () => {
-        const grams = getGrams();
-        if (!grams) return;
-        const m = calcMacrosForGrams(f, grams);
-        const selectedOption = measureSel.options[measureSel.selectedIndex];
-        const portionLabel = selectedOption.text;
-        const todayLog = getTodayLog();
-        todayLog.push({ name: f.name, portion: portionLabel, kcal: m.kcal, protein: m.protein, carbs: m.carbs, fat: m.fat });
-        calcHistory[todayKey()] = todayLog;
-        saveCalcLog();
-        renderCalcLog();
-        if (currentTab === 'progress') renderProgress();
-        addBtn.textContent = '✓ Added!';
-        addBtn.style.color = 'var(--success)';
-        setTimeout(() => { addBtn.textContent = '+ Add to Log'; addBtn.style.color = ''; }, 1500);
-      });
-    }
+  function getGrams() {
+    const v = measureSel.value;
+    if (v === 'custom_g') return parseFloat(customQty.value) || 0;
+    if (v === 'custom_oz') return (parseFloat(customQty.value) || 0) * 28.3495;
+    return parseFloat(v) || defaultG;
+  }
+  function refresh() {
+    const m = calc(f, getGrams());
+    macrosDiv.innerHTML =
+      '<span class="calc-macro-pill pill-kcal">' + m.kcal + ' kcal</span>' +
+      '<span class="calc-macro-pill pill-p">' + m.protein + 'g protein</span>' +
+      '<span class="calc-macro-pill pill-c">' + m.carbs + 'g carbs</span>' +
+      '<span class="calc-macro-pill pill-f">' + m.fat + 'g fat</span>';
+  }
+  measureSel.addEventListener('change', () => {
+    const v = measureSel.value;
+    customWrap.style.display = (v === 'custom_g' || v === 'custom_oz') ? 'block' : 'none';
+    refresh();
   });
+  customQty.addEventListener('input', refresh);
+  addBtn.addEventListener('click', () => {
+    const g = getGrams();
+    if (!g || g <= 0) { customWrap.style.display = 'block'; customQty.focus(); return; }
+    const m = calc(f, g);
+    const portionLabel = measureSel.options[measureSel.selectedIndex].text;
+    const log = getTodayLog();
+    log.push({ name: f.name, portion: portionLabel, kcal: m.kcal, protein: m.protein, carbs: m.carbs, fat: m.fat });
+    calcHistory[todayKey()] = log;
+    saveCalcLog();
+    renderCalcLog();
+    if (currentTab === 'progress') renderProgress();
+    addBtn.textContent = '✓ Added!';
+    addBtn.style.color = 'var(--success)';
+    addBtn.disabled = true;
+    setTimeout(() => { addBtn.textContent = '+ Add to Log'; addBtn.style.color = ''; addBtn.disabled = false; }, 2000);
+  });
+
+  return card;
+}
+
+function renderCalcResults(foods) {
+  _calcCardCounter = 0;
+  const c = document.getElementById('calc-results');
+  c.innerHTML = '';
+  foods.forEach(f => c.appendChild(buildCalcCard(f, false)));
+}
+
+function renderCalcResultsUSDA(foods, append) {
+  const c = document.getElementById('calc-results');
+  if (!append) { c.innerHTML = ''; _calcCardCounter = 0; }
+  foods.forEach(f => c.appendChild(buildCalcCard(f, true)));
 }
 
 
@@ -5009,8 +4970,4 @@ renderWeighIn();
 renderFAQ();
 </script>
 </body>
-</html>function renderCalcResultsUSDA(foods, append) {
-  const container = document.getElementById('calc-results');
-  if (!append) { container.innerHTML = ''; _calcCardCounter = 0; }
-  foods.forEach(f => container.appendChild(buildCalcCard(f, true)));
-}
+</html>
