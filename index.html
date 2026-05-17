@@ -476,6 +476,20 @@
   .prog-today-macro-val { font-family: var(--font-display); font-size: 20px; font-weight: 700; }
   .prog-today-macro-target { font-size: 11px; color: var(--text-muted); }
 
+  /* ── Recipe Actions (Favorite/Hide) ───────────── */
+  .recipe-actions { display: flex; gap: 6px; margin-top: 8px; border-top: 1px solid var(--border); padding-top: 8px; }
+  .recipe-action-btn { flex: 1; background: var(--bg-elevated); border: 1px solid var(--border); border-radius: var(--radius); padding: 6px 8px; font-size: 11px; color: var(--text-muted); cursor: pointer; text-align: center; transition: all 0.15s; }
+  .recipe-action-btn:hover { border-color: var(--gold-dim); color: var(--text-secondary); }
+  .recipe-action-btn.favorited { background: rgba(201,168,76,0.12); border-color: var(--gold-dim); color: var(--gold); }
+  .recipe-action-btn.hide-btn:hover { border-color: rgba(217,64,64,0.3); color: var(--red-bright); }
+  .favorites-section { background: var(--bg-surface); border: 1px solid rgba(201,168,76,0.2); border-radius: var(--radius-lg); padding: 18px; margin-bottom: 24px; }
+  .favorites-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .favorites-title { font-family: var(--font-display); font-size: 16px; font-weight: 700; color: var(--gold); letter-spacing: 0.04em; }
+  .hidden-toggle { font-size: 12px; color: var(--text-muted); cursor: pointer; background: none; border: none; }
+  .filter-pills { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+  .filter-pill { background: var(--bg-elevated); border: 1px solid var(--border); border-radius: 20px; padding: 4px 12px; font-size: 11px; color: var(--text-muted); cursor: pointer; }
+  .filter-pill.active { background: rgba(201,168,76,0.12); border-color: var(--gold-dim); color: var(--gold); }
+
   /* ── Auth Modal ─────────────────────────────────── */
   .auth-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 1000; display: flex; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); }
   .auth-overlay.hidden { display: none; }
@@ -2657,10 +2671,12 @@ function renderNutrition() {
     const diffColor = Math.abs(diff) < 80 ? 'var(--success)' : Math.abs(diff) < 150 ? 'var(--gold)' : 'var(--text-muted)';
     const ingredientList = meal.ingredients.map(i => `<li>${i}</li>`).join('');
     const stepList = meal.steps.map((s,idx) => `<li><span style="color:var(--gold);font-weight:600;margin-right:6px">${idx+1}.</span>${s}</li>`).join('');
+    const favd = isFavorite(meal.name);
+    const eName = meal.name.replace(/'/g, "\\'");
     return `
       <div class="meal-card">
         <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
-          <div class="meal-card-name">${meal.name}</div>
+          <div class="meal-card-name">${favd ? '⭐ ' : ''}${meal.name}</div>
           <span style="font-size:10px;background:var(--bg-elevated);color:var(--gold);padding:2px 8px;border-radius:20px;white-space:nowrap;margin-left:8px;font-weight:600">${meal.tag}</span>
         </div>
         <div class="meal-card-macros" style="margin-bottom:12px">
@@ -2682,13 +2698,74 @@ function renderNutrition() {
             </div>
           </div>
         </details>
+        <div class="recipe-actions">
+          <button class="recipe-action-btn ${favd ? 'favorited' : ''}" onclick="toggleFavoriteRecipe('${eName}')">${favd ? '⭐ Favorited' : '☆ Favorite'}</button>
+          <button class="recipe-action-btn hide-btn" onclick="hideRecipe('${eName}')">✕ Don't Show</button>
+        </div>
       </div>`;
   };
 
-  content.innerHTML = sections.map(s => {
+  // ── Determine cut intensity for recipe filtering ──
+  const nextComp2 = [...state.competitions].filter(c => c.date && new Date(c.date) > new Date()).sort((a,b) => new Date(a.date)-new Date(b.date))[0];
+  const daysOut = nextComp2 ? Math.ceil((new Date(nextComp2.date) - new Date()) / 86400000) : null;
+  const isCutting = daysOut !== null && daysOut <= 21;
+  const isAggressiveCut = daysOut !== null && daysOut <= 7;
+
+  // Filter meals: remove hidden, optionally filter by cut phase
+  function filterMeals(meals, targetKcal) {
+    let filtered = meals.filter(m => !isHidden(m.name));
+    if (isAggressiveCut) {
+      // Final week: only show meals within 120% of target, favor low kcal
+      filtered = filtered.filter(m => m.kcal <= targetKcal * 1.2);
+      filtered.sort((a, b) => a.kcal - b.kcal);
+    } else if (isCutting) {
+      // Cut phase: prioritize meals at or below target, deprioritize high-cal
+      filtered.sort((a, b) => Math.abs(a.kcal - targetKcal) - Math.abs(b.kcal - targetKcal));
+    }
+    return filtered;
+  }
+
+  // ── Build Favorites section ──
+  const favNames = state.favoriteRecipes || [];
+  const allRecipes = [...FOOD_DB.breakfast, ...FOOD_DB.lunch, ...FOOD_DB.dinner, ...FOOD_DB.snacks];
+  const favRecipes = favNames.map(n => allRecipes.find(r => r.name === n)).filter(Boolean);
+  const favSection = favRecipes.length > 0 ? `
+    <div class="favorites-section">
+      <div class="favorites-header">
+        <span class="favorites-title">⭐ Your Favorites (${favRecipes.length})</span>
+      </div>
+      <div class="meal-cards">
+        ${favRecipes.map(m => {
+          const catTarget = m.kcal <= 300 ? targets.snacks
+            : m.kcal <= 400 ? targets.breakfast
+            : m.kcal <= 550 ? targets.lunch : targets.dinner;
+          return renderMealCard(m, catTarget);
+        }).join('')}
+      </div>
+    </div>` : '';
+
+  // ── Build Hidden recipes info ──
+  const hiddenNames = state.hiddenRecipes || [];
+  const hiddenInfo = hiddenNames.length > 0 ? `
+    <div style="text-align:center;margin-bottom:20px">
+      <button onclick="unhideAllRecipes()" style="background:none;border:none;color:var(--text-muted);font-size:12px;cursor:pointer">
+        ${hiddenNames.length} recipe${hiddenNames.length > 1 ? 's' : ''} hidden · <span style="color:var(--gold);text-decoration:underline">Reset all</span>
+      </button>
+    </div>` : '';
+
+  // ── Cut phase banner ──
+  const cutBanner = isCutting ? `
+    <div class="supp-alert ${isAggressiveCut ? 'supp-alert-danger' : 'supp-alert-warning'}" style="margin-bottom:20px">
+      ${isAggressiveCut
+        ? '🚨 <strong>Final week cut mode</strong> — showing only low-calorie, low-sodium meals. High-calorie recipes are hidden to keep you on track.'
+        : '⚡ <strong>Cut phase active</strong> (' + daysOut + ' days to weigh-ins) — recipes are sorted by proximity to your calorie targets. Higher-calorie meals moved to the bottom.'}
+    </div>` : '';
+
+  content.innerHTML = favSection + cutBanner + hiddenInfo + sections.map(s => {
     const allMeals = FOOD_DB[s.key];
-    const meals = getRotatedMeals(allMeals, s.show);
-    const hasMore = allMeals.length > s.show;
+    const available = filterMeals(allMeals, targets[s.key]);
+    const meals = getRotatedMeals(available, s.show);
+    const hasMore = available.length > s.show;
     return `
       <div class="meal-section">
         <div class="meal-section-header">
@@ -2697,11 +2774,11 @@ function renderNutrition() {
           <span class="meal-section-kcal">~${targets[s.key].toLocaleString()} kcal target</span>
         </div>
         <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">${s.tip}</p>
-        <p style="font-size:11px;color:var(--text-muted);margin-bottom:12px">🔄 Recipes rotate weekly — showing ${meals.length} of ${allMeals.length} options this week.</p>
+        <p style="font-size:11px;color:var(--text-muted);margin-bottom:12px">🔄 Showing ${meals.length} of ${available.length} recipes this week${allMeals.length !== available.length ? ' (' + (allMeals.length - available.length) + ' filtered)' : ''}.</p>
         <div class="meal-cards" id="meals-${s.key}">
           ${meals.map(m => renderMealCard(m, targets[s.key])).join('')}
         </div>
-        ${hasMore ? `<button onclick="showAllMeals('${s.key}', ${targets[s.key]})" style="width:100%;margin-top:8px;padding:8px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-muted);font-size:12px;cursor:pointer">Show all ${allMeals.length} ${s.label.toLowerCase()} recipes ▾</button>` : ''}
+        ${hasMore ? `<button onclick="showAllMeals('${s.key}', ${targets[s.key]})" style="width:100%;margin-top:8px;padding:8px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-muted);font-size:12px;cursor:pointer">Show all ${available.length} ${s.label.toLowerCase()} recipes ▾</button>` : ''}
       </div>`;
   }).join('') + `<p class="nutrition-note">Calorie counts are estimates based on standard ingredients. Actual values vary by brand and preparation. Always work with a certified sports dietitian for a fully personalized plan.</p>`;
 }
@@ -4512,6 +4589,56 @@ function toggleFAQ(id) {
   if (!isOpen) item.classList.add('open');
 }
 
+
+// ---- RECIPE FAVORITES & HIDING ----
+function toggleFavoriteRecipe(name) {
+  // Require account to save favorites
+  if (!currentUser) {
+    showAuthModal('register');
+    const sub = document.getElementById('auth-sub');
+    if (sub) sub.textContent = 'Create a free account to save your favorite recipes across devices.';
+    return;
+  }
+  if (!state.favoriteRecipes) state.favoriteRecipes = [];
+  const idx = state.favoriteRecipes.indexOf(name);
+  if (idx >= 0) {
+    state.favoriteRecipes.splice(idx, 1);
+  } else {
+    state.favoriteRecipes.push(name);
+  }
+  saveState();
+  renderNutrition();
+}
+
+function hideRecipe(name) {
+  if (!state.hiddenRecipes) state.hiddenRecipes = [];
+  if (!state.hiddenRecipes.includes(name)) {
+    state.hiddenRecipes.push(name);
+    saveState();
+    renderNutrition();
+  }
+}
+
+function unhideRecipe(name) {
+  if (!state.hiddenRecipes) return;
+  state.hiddenRecipes = state.hiddenRecipes.filter(n => n !== name);
+  saveState();
+  renderNutrition();
+}
+
+function unhideAllRecipes() {
+  state.hiddenRecipes = [];
+  saveState();
+  renderNutrition();
+}
+
+function isFavorite(name) {
+  return (state.favoriteRecipes || []).includes(name);
+}
+
+function isHidden(name) {
+  return (state.hiddenRecipes || []).includes(name);
+}
 
 // ---- SHOW ALL MEALS (Nutrition tab) ----
 function showAllMeals(key, targetKcal) {
