@@ -3320,21 +3320,31 @@ function initCalcPage() {
   const btn = document.getElementById('calc-search-btn');
   const clearBtn = document.getElementById('calc-clear-log');
 
-  btn.addEventListener('click', () => {
-    const q = input.value.trim();
-    if (q) searchFood(q);
-  });
+  // Guard against duplicate listeners from multiple initCalcPage calls
+  if (!btn._bound) {
+    btn._bound = true;
+    btn.addEventListener('click', () => {
+      const q = input.value.trim();
+      if (q) searchFood(q);
+    });
+  }
 
-  input.addEventListener('keydown', e => {
-    if (e.key === 'Enter') { const q = input.value.trim(); if (q) searchFood(q); }
-  });
+  if (!input._bound) {
+    input._bound = true;
+    input.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { const q = input.value.trim(); if (q) searchFood(q); }
+    });
+  }
 
-  clearBtn.addEventListener('click', () => {
-    calcHistory[todayKey()] = [];
-    saveCalcLog();
-    renderCalcLog();
-    if (currentTab === 'progress') renderProgress();
-  });
+  if (!clearBtn._bound) {
+    clearBtn._bound = true;
+    clearBtn.addEventListener('click', () => {
+      calcHistory[todayKey()] = [];
+      saveCalcLog();
+      renderCalcLog();
+      if (currentTab === 'progress') renderProgress();
+    });
+  }
 
   // Category browse buttons
   document.querySelectorAll('.calc-cat-btn').forEach(btn => {
