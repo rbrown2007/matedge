@@ -2716,9 +2716,19 @@ async function searchFood(query) {
   hideCustomEntry();
 
   // Always search local database first (instant results)
-  const localMatches = FOOD_DB_SEARCH.filter(f =>
-    f.name.toLowerCase().includes(q) || f.cat.toLowerCase().includes(q)
-  );
+  // Split query into words — match foods containing ALL words (any order)
+  const words = q.split(/\s+/).filter(w => w.length > 0);
+  const localMatches = FOOD_DB_SEARCH.filter(f => {
+    const haystack = (f.name + ' ' + f.cat + ' ' + (f.brand || '')).toLowerCase();
+    return words.every(w => haystack.includes(w));
+  }).sort((a, b) => {
+    // Prioritize: exact name match > starts with > contains
+    const aName = a.name.toLowerCase();
+    const bName = b.name.toLowerCase();
+    const aExact = aName === q ? 0 : aName.startsWith(words[0]) ? 1 : 2;
+    const bExact = bName === q ? 0 : bName.startsWith(words[0]) ? 1 : 2;
+    return aExact - bExact;
+  });
 
   // Try server proxy (USDA + Open Food Facts — 3M+ foods)
   let apiResults = [];
