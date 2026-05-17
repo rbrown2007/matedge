@@ -878,6 +878,27 @@
         <button class="calc-cat-btn" data-cat="Snacks">⚡ Snacks</button>
         <button class="calc-cat-btn" data-cat="Recovery">💧 Recovery</button>
         <button class="calc-cat-btn" data-cat="Meals">🍱 Meals</button>
+        <button class="calc-cat-btn" data-cat="Supplements">💊 Supps</button>
+        <button class="calc-cat-btn calc-custom-btn" onclick="showCustomEntry()">✏ Custom Entry</button>
+      </div>
+      <!-- Custom entry form (hidden by default) -->
+      <div id="custom-entry-form" style="display:none;background:var(--bg-surface);border:1px solid var(--border-accent);border-radius:var(--radius-lg);padding:16px 18px;margin-bottom:16px">
+        <div style="font-size:14px;font-weight:700;color:var(--gold);margin-bottom:12px">✏ Custom Food Entry</div>
+        <div class="field"><label>Food Name</label><input type="text" id="custom-name" placeholder="e.g. Seeq Clear Whey Isolate"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="field"><label>Calories (kcal)</label><input type="number" id="custom-kcal" min="0" max="5000" step="1" placeholder="120"></div>
+          <div class="field"><label>Serving Size</label><input type="text" id="custom-serving" placeholder="e.g. 1 scoop (32g)"></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+          <div class="field"><label>Protein (g)</label><input type="number" id="custom-protein" min="0" max="500" step="0.1" placeholder="25"></div>
+          <div class="field"><label>Carbs (g)</label><input type="number" id="custom-carbs" min="0" max="500" step="0.1" placeholder="3"></div>
+          <div class="field"><label>Fat (g)</label><input type="number" id="custom-fat" min="0" max="500" step="0.1" placeholder="0.5"></div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:10px">
+          <button class="btn-log-weight" onclick="addCustomEntry()" style="flex:1">+ Add to Log</button>
+          <button onclick="hideCustomEntry()" style="flex:0;background:var(--bg-elevated);color:var(--text-muted);padding:8px 16px;border-radius:var(--radius);border:1px solid var(--border);font-size:13px;cursor:pointer">Cancel</button>
+        </div>
+        <p style="font-size:11px;color:var(--text-muted);margin-top:10px">💡 Enter values from the product label. All fields except name are optional.</p>
       </div>
       <div id="calc-status"></div>
       <div id="calc-results"></div>
@@ -2630,6 +2651,58 @@ const FOOD_DB_SEARCH = [
   { name:'Subway Turkey (6", wheat, veggies)', cat:'Meals', kcal:280, p:18, c:46, f:3.5, sg:232, sl:'6" sandwich', measures:[{l:'6" sub',g:232}] },
   { name:'Peanut Butter & Jelly Sandwich (wheat)', cat:'Meals', kcal:375, p:12, c:48, f:16, sg:130, sl:'1 sandwich', measures:[{l:'1 sandwich',g:130}] },
   { name:'Oatmeal (cooked, plain, water)', cat:'Meals', kcal:71, p:2.5, c:12, f:1.5, sg:234, sl:'1 cup cooked', measures:[{l:'½ cup cooked',g:117},{l:'1 cup cooked',g:234}] },
+  // ── SUPPLEMENTS: Protein Powders ────────────────────────────────
+  { name:'Optimum Nutrition Gold Standard Whey (Double Rich Chocolate)', cat:'Supplements', kcal:120, p:24, c:3, f:1.5, sg:31, sl:'1 scoop (31g)', measures:[{l:'1 scoop',g:31},{l:'2 scoops',g:62}] },
+  { name:'Optimum Nutrition Gold Standard Whey (Vanilla Ice Cream)', cat:'Supplements', kcal:120, p:24, c:4, f:1, sg:31, sl:'1 scoop (31g)', measures:[{l:'1 scoop',g:31},{l:'2 scoops',g:62}] },
+  { name:'Optimum Nutrition Gold Standard Whey (Extreme Milk Chocolate)', cat:'Supplements', kcal:120, p:24, c:3, f:1.5, sg:31, sl:'1 scoop (31g)', measures:[{l:'1 scoop',g:31},{l:'2 scoops',g:62}] },
+  { name:'Optimum Nutrition Gold Standard 100% Casein (Chocolate Supreme)', cat:'Supplements', kcal:120, p:24, c:3, f:1, sg:34, sl:'1 scoop (34g)', measures:[{l:'1 scoop',g:34},{l:'2 scoops',g:68}] },
+  { name:'Seeq Clear Whey Isolate (Peach Ring)', cat:'Supplements', kcal:110, p:22, c:4, f:0, sg:32, sl:'1 scoop (32g)', measures:[{l:'1 scoop',g:32},{l:'2 scoops',g:64}] },
+  { name:'Seeq Clear Whey Isolate (Rainbow Candy)', cat:'Supplements', kcal:110, p:22, c:4, f:0, sg:32, sl:'1 scoop (32g)', measures:[{l:'1 scoop',g:32},{l:'2 scoops',g:64}] },
+  { name:'Dymatize ISO100 Hydrolyzed (Gourmet Chocolate)', cat:'Supplements', kcal:110, p:25, c:1, f:0.5, sg:32, sl:'1 scoop (32g)', measures:[{l:'1 scoop',g:32},{l:'2 scoops',g:64}] },
+  { name:'Dymatize ISO100 Hydrolyzed (Birthday Cake)', cat:'Supplements', kcal:110, p:25, c:2, f:0.5, sg:31, sl:'1 scoop (31g)', measures:[{l:'1 scoop',g:31},{l:'2 scoops',g:62}] },
+  { name:'MyProtein Impact Whey (Natural Chocolate)', cat:'Supplements', kcal:103, p:21, c:1, f:1.9, sg:25, sl:'1 scoop (25g)', measures:[{l:'1 scoop',g:25},{l:'2 scoops',g:50}] },
+  { name:'MyProtein Clear Whey Isolate (Orange Mango)', cat:'Supplements', kcal:90, p:20, c:2, f:0, sg:25, sl:'1 scoop (25g)', measures:[{l:'1 scoop',g:25},{l:'2 scoops',g:50}] },
+  { name:'Ghost Whey Protein (Chips Ahoy)', cat:'Supplements', kcal:130, p:25, c:5, f:1.5, sg:36, sl:'1 scoop (36g)', measures:[{l:'1 scoop',g:36},{l:'2 scoops',g:72}] },
+  { name:'Muscle Milk Pro Series (Knockout Chocolate)', cat:'Supplements', kcal:160, p:32, c:6, f:3, sg:47, sl:'1 scoop (47g)', measures:[{l:'1 scoop',g:47},{l:'2 scoops',g:94}] },
+  { name:'Premier Protein Shake (Chocolate, ready-to-drink)', cat:'Supplements', kcal:160, p:30, c:5, f:3, sg:340, sl:'1 bottle (11.5 oz)', measures:[{l:'1 bottle',g:340}] },
+  { name:'Fairlife Core Power (Chocolate, 26g protein)', cat:'Supplements', kcal:170, p:26, c:9, f:4.5, sg:414, sl:'1 bottle (14 oz)', measures:[{l:'1 bottle',g:414}] },
+  { name:'Fairlife Core Power Elite (Chocolate, 42g protein)', cat:'Supplements', kcal:230, p:42, c:8, f:4.5, sg:414, sl:'1 bottle (14 oz)', measures:[{l:'1 bottle',g:414}] },
+  { name:'Orgain Organic Plant Protein (Chocolate Fudge)', cat:'Supplements', kcal:150, p:21, c:15, f:4, sg:46, sl:'2 scoops (46g)', measures:[{l:'2 scoops',g:46}] },
+  { name:'Garden of Life Raw Organic Protein (Vanilla)', cat:'Supplements', kcal:130, p:22, c:7, f:2, sg:31, sl:'1 scoop (31g)', measures:[{l:'1 scoop',g:31},{l:'2 scoops',g:62}] },
+  { name:'Naked Whey Unflavored (grass-fed)', cat:'Supplements', kcal:120, p:25, c:3, f:2, sg:30, sl:'1 scoop (30g)', measures:[{l:'1 scoop',g:30},{l:'2 scoops',g:60}] },
+  // ── SUPPLEMENTS: Creatine & Pre-Workout ─────────────────────────
+  { name:'Creatine Monohydrate (unflavored, any brand)', cat:'Supplements', kcal:0, p:0, c:0, f:0, sg:5, sl:'1 tsp (5g)', measures:[{l:'3g (female dose)',g:3},{l:'5g (1 tsp)',g:5},{l:'10g (2 tsp)',g:10}] },
+  { name:'Thorne Creatine Monohydrate (NSF Certified)', cat:'Supplements', kcal:0, p:0, c:0, f:0, sg:5, sl:'1 scoop (5g)', measures:[{l:'1 scoop (5g)',g:5}] },
+  { name:'C4 Original Pre-Workout (Fruit Punch)', cat:'Supplements', kcal:5, p:0, c:1, f:0, sg:6.5, sl:'1 scoop (6.5g)', measures:[{l:'1 scoop',g:6.5},{l:'2 scoops',g:13}] },
+  // ── SUPPLEMENTS: Bars ──────────────────────────────────────────
+  { name:'Quest Bar (Chocolate Chip Cookie Dough)', cat:'Supplements', kcal:190, p:21, c:21, f:7, sg:60, sl:'1 bar', measures:[{l:'1 bar',g:60}] },
+  { name:'Quest Bar (Cookies & Cream)', cat:'Supplements', kcal:200, p:21, c:21, f:8, sg:60, sl:'1 bar', measures:[{l:'1 bar',g:60}] },
+  { name:'ONE Bar (Birthday Cake)', cat:'Supplements', kcal:220, p:20, c:23, f:8, sg:60, sl:'1 bar', measures:[{l:'1 bar',g:60}] },
+  { name:'Barebells Protein Bar (Cookies & Cream)', cat:'Supplements', kcal:210, p:20, c:18, f:7, sg:55, sl:'1 bar', measures:[{l:'1 bar',g:55}] },
+  { name:'Built Bar (Double Chocolate)', cat:'Supplements', kcal:130, p:17, c:18, f:3, sg:49, sl:'1 bar', measures:[{l:'1 bar',g:49}] },
+  { name:'Think! High Protein Bar (Brownie Crunch)', cat:'Supplements', kcal:230, p:20, c:24, f:8, sg:60, sl:'1 bar', measures:[{l:'1 bar',g:60}] },
+  // ── SUPPLEMENTS: Electrolytes & Recovery ────────────────────────
+  { name:'Liquid IV Hydration Multiplier (Lemon Lime)', cat:'Supplements', kcal:45, p:0, c:11, f:0, sg:16, sl:'1 stick', measures:[{l:'1 stick',g:16}] },
+  { name:'LMNT Electrolyte Mix (Citrus Salt)', cat:'Supplements', kcal:0, p:0, c:0, f:0, sg:6, sl:'1 stick (1000mg Na)', measures:[{l:'1 stick',g:6},{l:'½ stick',g:3}] },
+  { name:'Nuun Sport Electrolyte Tablet', cat:'Supplements', kcal:10, p:0, c:2, f:0, sg:5.5, sl:'1 tablet (380mg Na)', measures:[{l:'1 tablet',g:5.5},{l:'2 tablets',g:11}] },
+  { name:'Drip Drop ORS (Watermelon)', cat:'Supplements', kcal:35, p:0, c:9, f:0, sg:10, sl:'1 packet', measures:[{l:'1 packet',g:10}] },
+  { name:'Pedialyte AdvancedCare Plus', cat:'Supplements', kcal:25, p:0, c:6, f:0, sg:240, sl:'1 cup (8 oz)', measures:[{l:'8 oz',g:240},{l:'12 oz',g:355},{l:'1 liter',g:1000}] },
+  // ── Additional common branded foods ─────────────────────────────
+  { name:'Chobani Greek Yogurt Plain Non-Fat', cat:'Protein', kcal:90, p:16, c:6, f:0, sg:170, sl:'1 container (6 oz)', measures:[{l:'1 container (6 oz)',g:170}] },
+  { name:'Chobani Greek Yogurt Plain Whole Milk', cat:'Protein', kcal:170, p:15, c:7, f:10, sg:170, sl:'1 container (6 oz)', measures:[{l:'1 container (6 oz)',g:170}] },
+  { name:'Chobani Greek Yogurt Strawberry Non-Fat', cat:'Protein', kcal:120, p:12, c:16, f:0, sg:150, sl:'1 container (5.3 oz)', measures:[{l:'1 container',g:150}] },
+  { name:'Chobani Zero Sugar (Vanilla)', cat:'Protein', kcal:60, p:10, c:4, f:0, sg:150, sl:'1 container (5.3 oz)', measures:[{l:'1 container',g:150}] },
+  { name:'Fage Total 0% Greek Yogurt (plain)', cat:'Protein', kcal:90, p:18, c:5, f:0, sg:170, sl:'1 container (6 oz)', measures:[{l:'1 container',g:170}] },
+  { name:'Fage Total 2% Greek Yogurt (plain)', cat:'Protein', kcal:140, p:15, c:6, f:4, sg:200, sl:'1 container (7 oz)', measures:[{l:'1 container',g:200}] },
+  { name:'Siggi\'s Icelandic Skyr (Vanilla, non-fat)', cat:'Protein', kcal:100, p:12, c:11, f:0, sg:150, sl:'1 container (5.3 oz)', measures:[{l:'1 container',g:150}] },
+  { name:'Oikos Triple Zero (Vanilla)', cat:'Protein', kcal:100, p:15, c:7, f:0, sg:150, sl:'1 container (5.3 oz)', measures:[{l:'1 container',g:150}] },
+  { name:'Dave\'s Killer Bread (21 Whole Grains)', cat:'Carbs', kcal:110, p:5, c:22, f:1.5, sg:34, sl:'1 slice', measures:[{l:'1 slice',g:34},{l:'2 slices',g:68}] },
+  { name:'Ezekiel 4:9 Sprouted Bread', cat:'Carbs', kcal:80, p:4, c:15, f:0.5, sg:34, sl:'1 slice', measures:[{l:'1 slice',g:34},{l:'2 slices',g:68}] },
+  { name:'Minute Rice (white, cooked)', cat:'Carbs', kcal:170, p:4, c:37, f:0.5, sg:158, sl:'1 cup cooked', measures:[{l:'½ cup',g:79},{l:'1 cup',g:158}] },
+  { name:'Uncle Ben\'s Ready Rice (Brown)', cat:'Carbs', kcal:220, p:5, c:42, f:3.5, sg:250, sl:'1 pouch', measures:[{l:'½ pouch',g:125},{l:'1 pouch',g:250}] },
+  { name:'Skippy Peanut Butter (Creamy)', cat:'Fats', kcal:190, p:7, c:7, f:16, sg:33, sl:'2 tbsp', measures:[{l:'1 tbsp',g:16},{l:'2 tbsp',g:33}] },
+  { name:'Justin\'s Almond Butter (Classic)', cat:'Fats', kcal:190, p:6, c:7, f:17, sg:32, sl:'2 tbsp', measures:[{l:'1 tbsp',g:16},{l:'2 tbsp',g:32}] },
+  { name:'Rx Nut Butter (Vanilla Almond)', cat:'Fats', kcal:180, p:9, c:6, f:14, sg:32, sl:'1 packet', measures:[{l:'1 packet',g:32}] },
 ];
 
 
@@ -2640,42 +2713,58 @@ async function searchFood(query) {
   const q = query.toLowerCase().trim();
   status.innerHTML = '<span style="color:var(--text-muted)">Searching...</span>';
   results.innerHTML = '';
+  hideCustomEntry();
 
-  // Try server proxy first (USDA + Open Food Facts — 3M+ foods)
-  try {
-    const res = await fetch(`/api/food-search?q=${encodeURIComponent(query)}`);
-    if (res.ok) {
-      const data = await res.json();
-      if (data.foods && data.foods.length > 0) {
-        const sourceLabel = data.source === 'usda+off' ? 'USDA + Open Food Facts'
-          : data.source === 'usda' ? 'USDA FoodData Central'
-          : data.source === 'off' ? 'Open Food Facts'
-          : 'food database';
-        status.innerHTML = `<strong style="color:var(--text-primary)">${data.foods.length} results</strong>
-          <span style="color:var(--text-muted)"> from ${sourceLabel}</span>`;
-        renderCalcResultsUSDA(data.foods);
-        return;
-      } else if (!data.fallback) {
-        status.textContent = 'No results found in database. Try a different search term.';
-        return;
-      }
-    }
-  } catch(e) {
-    // Server unreachable — fall through to local database
-  }
-
-  // Fallback: built-in local database (138 items, works offline)
-  const matches = FOOD_DB_SEARCH.filter(f =>
+  // Always search local database first (instant results)
+  const localMatches = FOOD_DB_SEARCH.filter(f =>
     f.name.toLowerCase().includes(q) || f.cat.toLowerCase().includes(q)
   );
 
-  if (!matches.length) {
-    status.innerHTML = `No results found. <span style="color:var(--text-muted)">Make sure the server is running (<code>node server.js</code>) for access to 3M+ foods. Offline: try chicken, rice, yogurt, eggs, oats...</span>`;
+  // Try server proxy (USDA + Open Food Facts — 3M+ foods)
+  let apiResults = [];
+  let apiSource = '';
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000);
+    const res = await fetch(`/api/food-search?q=${encodeURIComponent(query)}`, { signal: controller.signal });
+    clearTimeout(timeout);
+    if (res.ok) {
+      const data = await res.json();
+      if (data.foods && data.foods.length > 0) {
+        apiResults = data.foods;
+        apiSource = data.source === 'usda+off' ? 'USDA + Open Food Facts'
+          : data.source === 'usda' ? 'USDA FoodData Central'
+          : data.source === 'off' ? 'Open Food Facts'
+          : 'food database';
+      }
+    }
+  } catch(e) {
+    // Server unreachable or timeout — continue with local results only
+  }
+
+  // Show local results first, then API results below
+  if (localMatches.length === 0 && apiResults.length === 0) {
+    status.innerHTML = 'No results found. <span style="color:var(--text-muted)">Try a different search term, browse categories above, or use <strong>Custom Entry</strong> to enter values from a product label.</span>';
     return;
   }
 
-  status.innerHTML = `<strong style="color:var(--text-primary)">${matches.length} result${matches.length > 1 ? 's' : ''}</strong> <span style="color:var(--text-muted)">(offline database — start server for full search)</span>`;
-  renderCalcResults(matches);
+  let statusParts = [];
+  if (localMatches.length > 0) {
+    renderCalcResults(localMatches);
+    statusParts.push(`${localMatches.length} built-in`);
+  }
+  if (apiResults.length > 0) {
+    if (localMatches.length > 0) {
+      // Add a divider
+      const divider = document.createElement('div');
+      divider.style.cssText = 'border-top:1px solid var(--border);margin:16px 0 12px;padding-top:8px;font-size:12px;color:var(--text-muted);letter-spacing:0.06em;text-transform:uppercase';
+      divider.textContent = `🌐 ${apiResults.length} results from ${apiSource}`;
+      results.appendChild(divider);
+    }
+    renderCalcResultsUSDA(apiResults, true);
+    statusParts.push(`${apiResults.length} from ${apiSource || 'online'}`);
+  }
+  status.innerHTML = '<strong style="color:var(--text-primary)">' + (localMatches.length + apiResults.length) + ' total results</strong> <span style="color:var(--text-muted)">(' + statusParts.join(' + ') + ')</span>';
 }
 
 // Render results from USDA proxy (normalized format)
@@ -4129,6 +4218,57 @@ function toggleFAQ(id) {
 }
 
 
+// ---- CUSTOM FOOD ENTRY ----
+function showCustomEntry() {
+  document.getElementById('custom-entry-form').style.display = 'block';
+  document.getElementById('custom-name').focus();
+  document.getElementById('calc-results').innerHTML = '';
+  document.getElementById('calc-status').innerHTML = '';
+}
+
+function hideCustomEntry() {
+  document.getElementById('custom-entry-form').style.display = 'none';
+  // Clear fields
+  ['custom-name','custom-kcal','custom-protein','custom-carbs','custom-fat','custom-serving'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+}
+
+function addCustomEntry() {
+  const name = document.getElementById('custom-name').value.trim();
+  const kcal = parseFloat(document.getElementById('custom-kcal').value) || 0;
+  const protein = parseFloat(document.getElementById('custom-protein').value) || 0;
+  const carbs = parseFloat(document.getElementById('custom-carbs').value) || 0;
+  const fat = parseFloat(document.getElementById('custom-fat').value) || 0;
+  const serving = document.getElementById('custom-serving').value.trim() || '1 serving';
+
+  if (!name) {
+    document.getElementById('custom-name').style.borderColor = 'var(--red-bright)';
+    setTimeout(() => document.getElementById('custom-name').style.borderColor = '', 1500);
+    return;
+  }
+  if (!kcal && !protein && !carbs && !fat) {
+    alert('Please enter at least one nutritional value (calories, protein, carbs, or fat).');
+    return;
+  }
+  // Auto-calculate kcal from macros if not provided
+  const calcKcal = kcal || Math.round((protein * 4) + (carbs * 4) + (fat * 9));
+
+  const todayLog = getTodayLog();
+  todayLog.push({ name: name, portion: serving, kcal: calcKcal, protein, carbs, fat });
+  calcHistory[todayKey()] = todayLog;
+  saveCalcLog();
+  renderCalcLog();
+  if (currentTab === 'progress') renderProgress();
+  hideCustomEntry();
+
+  // Show success
+  const status = document.getElementById('calc-status');
+  status.innerHTML = '<span style="color:var(--success)">✓ ' + name + ' added to today\'s log</span>';
+  setTimeout(() => { if (status.innerHTML.includes(name)) status.innerHTML = ''; }, 3000);
+}
+
 // ---- DATA EXPORT / IMPORT ----
 function exportData() {
   const exportObj = {
@@ -4266,8 +4406,10 @@ function showResetForm() {
 
 function skipAuth() {
   hideAuthModal();
-  document.getElementById('sync-banner').classList.remove('hidden');
-  document.getElementById('signin-header-btn').style.display = 'block';
+  const banner = document.getElementById('sync-banner');
+  if (banner) banner.classList.remove('hidden');
+  const btn = document.getElementById('signin-header-btn');
+  if (btn) btn.style.display = 'block';
 }
 
 function showAuthError(msg) {
