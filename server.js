@@ -75,20 +75,25 @@ function httpsGet(options) {
 
 // ── USDA FoodData Central ─────────────────────────────────────────────────
 async function searchUSDA(query) {
-  const path = `/fdc/v1/foods/search?query=${encodeURIComponent(query)}&pageSize=50&api_key=${USDA_API_KEY}`;
-  const r = await httpsGet({ hostname: 'api.nal.usda.gov', path, method: 'GET' });
+  const usdaPath = `/fdc/v1/foods/search?query=${encodeURIComponent(query)}&pageSize=50&api_key=${USDA_API_KEY}`;
+  const r = await httpsGet({ hostname: 'api.nal.usda.gov', path: usdaPath, method: 'GET' });
 
   if (r.status !== 200) throw new Error(`USDA returned ${r.status}`);
   const data = JSON.parse(r.body);
+  console.log(`[BFTM] USDA raw: ${data.totalHits || 0} total hits`);
 
   return (data.foods || [])
     .map(f => {
+      const nuts = f.foodNutrients || [];
       const get = (name) => {
-        const n = (f.foodNutrients || []).find(x => x.nutrientName && x.nutrientName.includes(name));
+        const n = nuts.find(x => x.nutrientName && x.nutrientName.includes(name));
         return n ? Math.round((n.value || 0) * 10) / 10 : 0;
       };
-      const kcal = get('Energy');
-      if (!kcal) return null;
+      // Energy: prefer KCAL, convert from kJ if only kJ available
+      const kcalNut = nuts.find(x => x.nutrientName === 'Energy' && (x.unitName === 'KCAL' || x.unitName === 'kcal'));
+      const kjNut = nuts.find(x => x.nutrientName === 'Energy' && (x.unitName === 'kJ' || x.unitName === 'KJ'));
+      const kcal = kcalNut ? Math.round(kcalNut.value) : kjNut ? Math.round(kjNut.value / 4.184) : 0;
+      if (!kcal || kcal <= 0) return null;
       return {
         id: f.fdcId,
         name: f.description,
@@ -102,7 +107,7 @@ async function searchUSDA(query) {
         fiber: get('Fiber'),
         sugar: get('Sugars'),
         sodium: get('Sodium'),
-        servingSize: f.servingSize || 100,
+        servingSize: parseFloat(f.servingSize) || 100,
         servingUnit: f.servingSizeUnit || 'g',
         servingLabel: f.servingSize ? `${f.servingSize}${f.servingSizeUnit || 'g'}` : '100g',
         source: 'usda',
@@ -114,7 +119,7 @@ async function searchUSDA(query) {
 // ── Open Food Facts (fallback / supplement) ───────────────────────────────
 async function searchOFF(query) {
   const encoded = encodeURIComponent(query);
-  const path = `/cgi/search.pl?search_terms=${encoded}&search_simple=1&action=process&json=1&page_size=30&fields=product_name,brands,nutriments,serving_size,serving_quantity,categories_tags`;
+  const path = `/cgi/search.pl?search_terms=${encoded}&search_simple=1&action=process&json=1&page_size=50&fields=product_name,brands,nutriments,serving_size,serving_quantity,categories_tags`;
   const r = await httpsGet({ hostname: 'world.openfoodfacts.org', path, method: 'GET' });
 
   if (r.status !== 200) throw new Error(`OFF returned ${r.status}`);
@@ -153,27 +158,29 @@ async function handleFoodSearch(req, res, query) {
   let foods = [];
   let sources = [];
 
-  // Try USDA first
-  try {
-    const usdaFoods = await searchUSDA(query);
-    foods = foods.concat(usdaFoods);
+  // Search both APIs in parallel for faster results
+  const [usdaResult, offResult] = await Promise.allSettled([
+    searchUSDA(query),
+    searchOFF(query),
+  ]);
+
+  if (usdaResult.status === 'fulfilled' && usdaResult.value.length > 0) {
+    foods = foods.concat(usdaResult.value);
     sources.push('usda');
-    console.log(`[BFTM] USDA: ${usdaFoods.length} results for "${query}"`);
-  } catch(e) {
-    console.warn(`[BFTM] USDA failed: ${e.message}`);
+    console.log(`[BFTM] USDA: ${usdaResult.value.length} results for "${query}"`);
+  } else if (usdaResult.status === 'rejected') {
+    console.warn(`[BFTM] USDA failed: ${usdaResult.reason.message}`);
   }
 
-  // Always also try Open Food Facts for more branded results
-  try {
-    const offFoods = await searchOFF(query);
-    // Deduplicate by name similarity
+  if (offResult.status === 'fulfilled' && offResult.value.length > 0) {
+    const offFoods = offResult.value;
     const usdaNames = new Set(foods.map(f => f.name.toLowerCase().slice(0, 20)));
     const newFoods = offFoods.filter(f => !usdaNames.has(f.name.toLowerCase().slice(0, 20)));
     foods = foods.concat(newFoods);
     sources.push('off');
     console.log(`[BFTM] OFF: ${offFoods.length} results (${newFoods.length} new) for "${query}"`);
-  } catch(e) {
-    console.warn(`[BFTM] OFF failed: ${e.message}`);
+  } else if (offResult.status === 'rejected') {
+    console.warn(`[BFTM] OFF failed: ${offResult.reason.message}`);
   }
 
   if (foods.length === 0) {
