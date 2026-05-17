@@ -55,6 +55,13 @@
     signInWithPopup, signOut, sendPasswordResetEmail,
     onAuthStateChanged, doc, getDoc, setDoc, deleteDoc,
     collection, getDocs, writeBatch };
+
+  // Signal to main script that Firebase is ready
+  if (typeof window._onFirebaseReady === 'function') {
+    window._onFirebaseReady();
+  } else {
+    window._firebaseLoaded = true;
+  }
 </script>
 
 <!-- Fonts -->
@@ -628,7 +635,7 @@
           <div class="acct-avatar" id="acct-avatar">?</div>
           <span class="acct-name" id="acct-name"></span>
         </div>
-        <button id="signin-header-btn" onclick="showAuthModal()" class="btn-log-weight" style="font-size:12px;padding:6px 14px;display:none">Sign In</button>
+        <button id="signin-header-btn" onclick="showAuthModal()" class="btn-log-weight" style="font-size:12px;padding:6px 14px">Sign In</button>
       </div>
       <!-- Victory icon — right side of header -->
       <div class="header-icon">
@@ -4190,13 +4197,21 @@ let fb = null; // Firebase references, set after SDK loads
 
 // Wait for Firebase module to be ready
 function waitForFirebase(cb) {
+  // Check if already loaded (module ran before this)
   if (window._firebase) { fb = window._firebase; cb(); return; }
-  let attempts = 0;
-  const interval = setInterval(() => {
-    attempts++;
-    if (window._firebase) { clearInterval(interval); fb = window._firebase; cb(); }
-    if (attempts > 20) { clearInterval(interval); console.warn('[BFTM] Firebase not loaded'); cb(); }
-  }, 200);
+  if (window._firebaseLoaded && window._firebase) { fb = window._firebase; cb(); return; }
+  // Not loaded yet — register callback for when module finishes
+  window._onFirebaseReady = () => {
+    fb = window._firebase;
+    cb();
+  };
+  // Safety timeout — if Firebase never loads (blocked, offline, etc)
+  setTimeout(() => {
+    if (!fb) {
+      console.warn('[BFTM] Firebase did not load within 10s');
+      cb();
+    }
+  }, 10000);
 }
 
 // ── Auth UI ────────────────────────────────────────────────────────
