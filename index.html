@@ -1546,13 +1546,30 @@ function renderPlan() {
   const cycleCalAdj = (isFemale && cyclePhase === 'luteal') ? 200
     : (isFemale && cyclePhase === 'menstrual') ? 100 : 0;
 
-  const cutPerDay = (daysToComp && nextComp && nextComp.targetWeight)
-    ? Math.max(0, (effectiveWeight - parseFloat(nextComp.targetWeight)) / Math.max(1, daysToComp))
-    : 0;
+  const targetWeight = (nextComp && nextComp.targetWeight) ? parseFloat(nextComp.targetWeight) : null;
+  const cutRemaining = (daysToComp && targetWeight) ? Math.max(0, effectiveWeight - targetWeight) : 0;
+  const cutPerDay = daysToComp ? cutRemaining / Math.max(1, daysToComp) : 0;
 
-  // Women cut more conservatively — max 300 kcal deficit (vs 500 for men)
+  // Calculate deficit needed: 1 lb fat loss requires ~3500 kcal deficit
+  // So cutPerDay (lbs) * 500 kcal/lb/day is the theoretical deficit needed
+  // But we cap it for athlete safety
   const maxDeficit = isFemale ? 300 : 500;
-  const cals = Math.round(tdee - Math.min(maxDeficit, cutPerDay * 180) + cycleCalAdj);
+  const neededDeficit = Math.round(cutPerDay * 500);
+  const appliedDeficit = Math.min(maxDeficit, neededDeficit);
+  const cals = Math.round(tdee - appliedDeficit + cycleCalAdj);
+
+  // Safety flags
+  const cutPctBody = effectiveWeight ? (cutRemaining / effectiveWeight * 100) : 0;
+  const weeklyRate = cutPerDay * 7;
+  const weeklyPct = effectiveWeight ? (weeklyRate / effectiveWeight * 100) : 0;
+  let cutWarning = null;
+  if (cutRemaining > 0 && daysToComp <= 7 && cutPctBody > 3) {
+    cutWarning = { level: 'danger', msg: `⚠ You need to cut ${cutRemaining.toFixed(1)} lbs in ${daysToComp} days — this is ${cutPctBody.toFixed(1)}% of your body weight. Cuts over 3% same-week carry serious health risks. Consult your coach and physician immediately.` };
+  } else if (weeklyPct > 1.5) {
+    cutWarning = { level: 'warning', msg: `⚡ Your current cut pace is ${weeklyRate.toFixed(1)} lbs/week (${weeklyPct.toFixed(1)}% of body weight). The safe maximum is 1.5%/week. Your calorie deficit is capped at ${maxDeficit} kcal to protect performance — the remaining weight may need to come from water management closer to weigh-ins.` };
+  } else if (cutRemaining > 0 && neededDeficit > maxDeficit) {
+    cutWarning = { level: 'info', msg: `📊 Deficit capped at ${maxDeficit} kcal/day (needed ${neededDeficit} for pace). The remaining gap will be managed through water taper and gut content in the final days.` };
+  }
 
   // Women need slightly less protein per lb but more iron-rich foods
   const proteinPerLb = isFemale ? 0.75 : 0.8;
@@ -1699,6 +1716,11 @@ function renderPlan() {
     { time:'Evening', amount:'Remainder', note:'Stop 1 hr before bed' },
   ];
 
+  const cutWarningHTML = cutWarning ? `
+    <div class="supp-alert ${cutWarning.level === 'danger' ? 'supp-alert-danger' : cutWarning.level === 'warning' ? 'supp-alert-warning' : 'supp-alert-info'}" style="margin-bottom:16px">
+      ${cutWarning.msg}
+    </div>` : '';
+
   const liveWeightBanner = liveWeight && liveWeight !== parseFloat(weight) ? `
     <div class="supp-alert supp-alert-info" style="margin-bottom:16px">
       📍 <strong>Live weight active:</strong> Daily plan is based on your most recent logged morning weight of <strong>${liveWeight} lbs</strong>
@@ -1707,6 +1729,7 @@ function renderPlan() {
     </div>` : '';
 
   content.innerHTML = `
+    ${cutWarningHTML}
     ${liveWeightBanner}
     ${cycleInfo ? `<div class="supp-alert" style="background:rgba(201,168,76,0.08);border:1px solid rgba(201,168,76,0.25);color:var(--text-primary);margin-bottom:16px;font-size:13px">
       <span style="font-size:16px;margin-right:8px">${cycleInfo.icon}</span><strong style="color:${cycleInfo.color}">Cycle Phase Guidance</strong> — ${cycleInfo.msg}
@@ -1896,6 +1919,46 @@ const FOOD_DB = {
       ],
       tip: 'Pair with 1–2 slices of whole grain toast to add 30–40g carbs on heavy training days.',
     },
+    {
+      name: 'Smoothie Bowl',
+      kcal: 460, p: 30, c: 58, f: 12,
+      tag: 'Quick · Recovery',
+      ingredients: ['1 cup frozen mixed berries','1 scoop protein powder','1 frozen banana','1/2 cup Greek yogurt','1/4 cup granola','1 tbsp almond butter','1 tbsp honey'],
+      steps: ['Blend berries, protein powder, banana, and yogurt until thick (less liquid than a smoothie).','Pour into bowl.','Top with granola, almond butter drizzle, and honey.'],
+      tip: 'Keep the blend thick — it should be spoonable, not drinkable. Add 1 tbsp of liquid at a time if needed.',
+    },
+    {
+      name: 'Overnight Oats',
+      kcal: 420, p: 20, c: 62, f: 10,
+      tag: 'Meal Prep · Zero Cook',
+      ingredients: ['1/2 cup rolled oats','1/2 cup Greek yogurt','1/2 cup milk','1 tbsp chia seeds','1 tbsp honey','1/2 cup strawberries (sliced)'],
+      steps: ['Mix oats, yogurt, milk, chia seeds, and honey in a jar.','Refrigerate overnight (minimum 4 hours).','Top with strawberries before eating.'],
+      tip: 'Make 3–4 jars on Sunday night for grab-and-go breakfasts all week. Keeps 4 days in the fridge.',
+    },
+    {
+      name: 'Egg & Cheese Breakfast Burrito',
+      kcal: 520, p: 32, c: 42, f: 22,
+      tag: 'Portable · Game Day',
+      ingredients: ['3 large eggs (scrambled)','1 large whole wheat tortilla','1/4 cup black beans','1/4 cup shredded cheddar','2 tbsp salsa','1/4 avocado (sliced)'],
+      steps: ['Scramble eggs in a non-stick pan.','Warm tortilla 15 seconds in microwave.','Layer beans, eggs, cheese, salsa, and avocado.','Roll tightly, slice in half. Wrap in foil for travel.'],
+      tip: 'Batch-make 4–5 burritos, wrap in foil and freeze. Microwave 90 seconds from frozen for instant breakfast.',
+    },
+    {
+      name: 'Cottage Cheese Fruit Bowl',
+      kcal: 350, p: 28, c: 40, f: 6,
+      tag: 'High Protein · Light',
+      ingredients: ['1.5 cups low-fat cottage cheese','1/2 cup pineapple chunks','1/2 cup blueberries','1 tbsp honey','2 tbsp walnuts'],
+      steps: ['Spoon cottage cheese into bowl.','Top with pineapple, blueberries, walnuts, and honey drizzle.'],
+      tip: 'Cottage cheese has 28g protein per serving — one of the highest protein-to-calorie ratios available.',
+    },
+    {
+      name: 'PB Banana Toast',
+      kcal: 440, p: 14, c: 52, f: 20,
+      tag: 'Quick · Pre-Practice',
+      ingredients: ['2 slices whole grain bread (toasted)','2 tbsp peanut butter','1 medium banana (sliced)','1 tsp honey','Pinch of cinnamon'],
+      steps: ['Toast bread.','Spread peanut butter evenly on both slices.','Top with banana slices, honey drizzle, and cinnamon.'],
+      tip: 'Simple but effective pre-practice fuel. Eat 60–90 min before training for best energy.',
+    },
   ],
   lunch: [
     {
@@ -2033,6 +2096,54 @@ const FOOD_DB = {
         'Squeeze lime juice over everything and top with cilantro.',
       ],
       tip: 'Brown rice has more fiber and nutrients than white — better for sustained energy between practices.',
+    },
+    {
+      name: 'Mediterranean Chicken Plate',
+      kcal: 580, p: 48, c: 40, f: 22,
+      tag: 'Anti-Inflammatory · Balanced',
+      ingredients: ['6 oz grilled chicken breast','1/2 cup hummus','1 cup cucumber + tomato salad','1 whole wheat pita','2 tbsp olive oil and lemon dressing','Feta cheese crumbles (1 oz)'],
+      steps: ['Grill chicken with oregano, garlic, lemon, salt.','Dice cucumber and tomato, dress with olive oil and lemon.','Warm pita 30 seconds.','Plate chicken, hummus, salad, feta, and pita.'],
+      tip: 'Mediterranean diet is one of the most studied anti-inflammatory eating patterns — great for recovery.',
+    },
+    {
+      name: 'Turkey Meatball Sub',
+      kcal: 610, p: 44, c: 56, f: 16,
+      tag: 'Meal Prep · Satisfying',
+      ingredients: ['5 oz ground turkey (93% lean)','1/4 cup breadcrumbs','1 egg white','6-inch whole wheat hoagie roll','1/3 cup marinara sauce','1 oz part-skim mozzarella','Italian seasoning, garlic powder'],
+      steps: ['Mix turkey, breadcrumbs, egg white, and seasoning. Form 6–8 mini meatballs.','Bake at 400°F for 15 min.','Warm marinara. Split hoagie roll.','Fill with meatballs, sauce, and mozzarella. Broil 1 min to melt.'],
+      tip: 'Make a double batch of meatballs and freeze — reheat in marinara for a 5-minute meal.',
+    },
+    {
+      name: 'Asian Tuna Poke Bowl',
+      kcal: 540, p: 42, c: 52, f: 14,
+      tag: 'Omega-3 Rich · Fresh',
+      ingredients: ['5 oz sushi-grade tuna (cubed)','1 cup sushi rice (cooked)','1/2 cup edamame (shelled)','1/4 avocado (sliced)','2 tbsp low-sodium soy sauce','1 tsp sesame oil','Sesame seeds, green onion'],
+      steps: ['Toss tuna cubes with soy sauce and sesame oil. Marinate 10 min.','Cook sushi rice per package directions.','Build bowl: rice, tuna, edamame, avocado.','Top with sesame seeds and sliced green onion.'],
+      tip: 'Raw tuna is high in omega-3s and absorbs faster than cooked fish — ideal for recovery meals.',
+    },
+    {
+      name: 'Black Bean & Sweet Potato Bowl',
+      kcal: 560, p: 22, c: 78, f: 14,
+      tag: 'Plant-Based · High Fiber',
+      ingredients: ['1 medium sweet potato (cubed and roasted)','3/4 cup black beans','1/2 cup corn','1/4 avocado','1/4 cup fresh salsa','1 tbsp lime juice','Cilantro, cumin, chili powder'],
+      steps: ['Roast sweet potato cubes at 400°F for 25 min with cumin and chili powder.','Warm black beans and corn.','Build bowl: sweet potato base, beans, corn, salsa, avocado.','Squeeze lime and top with cilantro.'],
+      tip: 'Works great for vegetarian wrestlers or meatless training days. Add grilled chicken for +30g protein.',
+    },
+    {
+      name: 'Deli Turkey & Hummus Wrap',
+      kcal: 480, p: 34, c: 46, f: 16,
+      tag: 'Quick · No Cook',
+      ingredients: ['1 large whole wheat tortilla','4 oz low-sodium turkey breast','3 tbsp hummus','1 cup romaine lettuce','2 slices tomato','1/4 cup shredded carrots','Salt, pepper, hot sauce'],
+      steps: ['Spread hummus across tortilla.','Layer turkey, lettuce, tomato, and carrots.','Season, roll tightly, slice diagonally.'],
+      tip: 'Zero cook time. Pack the night before and grab from the fridge between classes.',
+    },
+    {
+      name: 'Egg Fried Rice',
+      kcal: 520, p: 24, c: 66, f: 16,
+      tag: 'Budget · Quick',
+      ingredients: ['1.5 cups day-old brown rice','3 large eggs','1 cup frozen peas and carrots','2 tbsp low-sodium soy sauce','1 tsp sesame oil','2 green onions','1 clove garlic'],
+      steps: ['Heat wok on high. Scramble eggs, remove.','Add sesame oil, garlic, and frozen veggies. Stir fry 2 min.','Add cold rice, break up clumps. Stir fry 3 min until heated.','Return eggs, add soy sauce, toss. Top with green onions.'],
+      tip: 'Under $3 per serving and ready in 10 minutes. Day-old rice fries better than fresh.',
     },
   ],
   dinner: [
@@ -2175,6 +2286,54 @@ const FOOD_DB = {
         'Rest pork 5 min before slicing.',
       ],
       tip: 'Pork tenderloin is one of the leanest cuts of meat — comparable to chicken breast in fat content.',
+    },
+    {
+      name: 'Lemon Herb Chicken & Couscous',
+      kcal: 590, p: 52, c: 54, f: 14,
+      tag: 'Light · Quick',
+      ingredients: ['6 oz chicken breast','1 cup couscous (cooked)','1 cup roasted zucchini','2 tbsp lemon juice','1 tbsp olive oil','Fresh parsley, oregano','2 cloves garlic (minced)'],
+      steps: ['Season chicken with lemon, olive oil, garlic, oregano. Grill or bake 7 min per side.','Cook couscous: pour 1 cup boiling water over 2/3 cup dry couscous, cover 5 min, fluff.','Roast zucchini at 400°F 15 min.','Plate together, squeeze fresh lemon, garnish with parsley.'],
+      tip: 'Couscous cooks in 5 minutes — the fastest grain option when you get home late from practice.',
+    },
+    {
+      name: 'Beef & Broccoli (Takeout-Style)',
+      kcal: 660, p: 50, c: 62, f: 18,
+      tag: 'High Protein · Satisfying',
+      ingredients: ['6 oz flank steak (thin sliced)','2 cups broccoli florets','1.5 cups white rice (cooked)','3 tbsp low-sodium soy sauce','1 tbsp cornstarch','1 tbsp honey','1 tsp sesame oil','1 clove garlic, 1 tsp ginger'],
+      steps: ['Toss beef with cornstarch and 1 tbsp soy sauce.','Heat wok on high. Sear beef 2 min, remove.','Stir fry broccoli 3 min. Add garlic and ginger.','Return beef, add remaining soy sauce, honey, sesame oil. Toss 1 min.','Serve over rice.'],
+      tip: 'Healthier than takeout and ready in 15 minutes. The cornstarch creates that glossy sauce texture.',
+    },
+    {
+      name: 'Mediterranean Baked Cod',
+      kcal: 520, p: 46, c: 42, f: 14,
+      tag: 'Low Fat · Omega-3',
+      ingredients: ['6 oz cod fillet','1 cup cherry tomatoes','1/2 cup Kalamata olives','1/2 cup couscous (cooked)','2 tbsp olive oil','1 lemon','Capers, oregano, garlic'],
+      steps: ['Preheat oven to 400°F. Place cod in a baking dish.','Surround with halved tomatoes, olives, capers.','Drizzle olive oil, squeeze lemon, season with oregano and garlic.','Bake 18–20 min until cod flakes easily.','Serve over couscous.'],
+      tip: 'Cod is one of the leanest fish — only 1g fat per 100g. Perfect when you need high protein with minimal fat.',
+    },
+    {
+      name: 'Chicken Fajita Bowl',
+      kcal: 620, p: 48, c: 58, f: 18,
+      tag: 'Flavorful · Meal Prep',
+      ingredients: ['6 oz chicken breast (sliced)','1 cup brown rice (cooked)','1 bell pepper (sliced)','1/2 onion (sliced)','1/4 avocado','2 tbsp Greek yogurt (sour cream sub)','1 tbsp olive oil','Cumin, chili powder, garlic, lime'],
+      steps: ['Season chicken with cumin, chili powder, garlic. Cook in olive oil 6 min per side, slice.','Sauté peppers and onions 4 min until slightly charred.','Build bowl: rice, chicken, peppers, onions.','Top with avocado, Greek yogurt, and lime squeeze.'],
+      tip: 'Season the chicken the night before for deeper flavor. Works great for meal prep — reheat all week.',
+    },
+    {
+      name: 'Turkey Chili',
+      kcal: 540, p: 46, c: 48, f: 12,
+      tag: 'High Protein · Batch Cook',
+      ingredients: ['8 oz ground turkey (93% lean)','1 can (15 oz) kidney beans','1 can (14 oz) diced tomatoes','1/2 cup corn','1/2 onion (diced)','2 cloves garlic','2 tbsp chili powder','1 tsp cumin'],
+      steps: ['Brown turkey in a pot over medium-high heat. Drain fat.','Add onion and garlic, cook 2 min.','Add tomatoes, beans, corn, chili powder, cumin.','Simmer 20 min, stirring occasionally. Season with salt and pepper.'],
+      tip: 'Makes 4 servings. Freezes beautifully for 2 months — one of the best batch-cook options for wrestlers.',
+    },
+    {
+      name: 'Teriyaki Salmon & Edamame Rice',
+      kcal: 640, p: 48, c: 56, f: 22,
+      tag: 'Omega-3 · Recovery',
+      ingredients: ['5 oz salmon fillet','1 cup jasmine rice (cooked)','1/2 cup shelled edamame','3 tbsp teriyaki sauce (low sodium)','1 tsp sesame seeds','1 green onion (sliced)','1 tsp sesame oil'],
+      steps: ['Brush salmon with teriyaki sauce. Bake at 400°F for 12–14 min.','Cook rice, fold in edamame and sesame oil.','Plate rice, top with salmon.','Drizzle remaining teriyaki, sprinkle sesame seeds and green onion.'],
+      tip: 'Salmon + edamame together deliver complete protein plus omega-3s and plant-based iron.',
     },
   ],
   snacks: [
@@ -2345,11 +2504,26 @@ function renderNutrition() {
 
   subtitle.textContent = `${today} · ${cals.toLocaleString()} kcal target · ${todayTraining}`;
 
+  // Rotate recipes weekly — show different options each week
+  const weekNum = Math.floor((Date.now() - new Date('2025-01-01').getTime()) / (7 * 24 * 60 * 60 * 1000));
+
+  function getRotatedMeals(allMeals, perWeek) {
+    const count = perWeek || 3;
+    const total = allMeals.length;
+    if (total <= count) return allMeals;
+    const offset = (weekNum * count) % total;
+    const result = [];
+    for (let i = 0; i < count; i++) {
+      result.push(allMeals[(offset + i) % total]);
+    }
+    return result;
+  }
+
   const sections = [
-    { key: 'breakfast', label: 'Breakfast', icon: '🌅', tip: 'Eat within 1 hour of waking. Prioritize protein and complex carbs.' },
-    { key: 'lunch',     label: 'Lunch',     icon: '☀️', tip: 'Largest carb window — eat 2–3 hrs before afternoon practice.' },
-    { key: 'dinner',    label: 'Dinner',    icon: '🌙', tip: 'Protein-heavy for overnight muscle repair. Keep carbs moderate.' },
-    { key: 'snacks',    label: 'Snacks',    icon: '⚡', tip: 'Pick 1–2 options based on remaining daily calories.' },
+    { key: 'breakfast', label: 'Breakfast', icon: '🌅', tip: 'Eat within 1 hour of waking. Prioritize protein and complex carbs.', show: 3 },
+    { key: 'lunch',     label: 'Lunch',     icon: '☀️', tip: 'Largest carb window — eat 2–3 hrs before afternoon practice.', show: 3 },
+    { key: 'dinner',    label: 'Dinner',    icon: '🌙', tip: 'Protein-heavy for overnight muscle repair. Keep carbs moderate.', show: 3 },
+    { key: 'snacks',    label: 'Snacks',    icon: '⚡', tip: 'Pick 1–2 options based on remaining daily calories.', show: 4 },
   ];
 
   const renderMealCard = (meal, targetKcal) => {
@@ -2387,7 +2561,9 @@ function renderNutrition() {
   };
 
   content.innerHTML = sections.map(s => {
-    const meals = FOOD_DB[s.key];
+    const allMeals = FOOD_DB[s.key];
+    const meals = getRotatedMeals(allMeals, s.show);
+    const hasMore = allMeals.length > s.show;
     return `
       <div class="meal-section">
         <div class="meal-section-header">
@@ -2396,9 +2572,11 @@ function renderNutrition() {
           <span class="meal-section-kcal">~${targets[s.key].toLocaleString()} kcal target</span>
         </div>
         <p style="font-size:12px;color:var(--text-muted);margin-bottom:12px">${s.tip}</p>
-        <div class="meal-cards">
+        <p style="font-size:11px;color:var(--text-muted);margin-bottom:12px">🔄 Recipes rotate weekly — showing ${meals.length} of ${allMeals.length} options this week.</p>
+        <div class="meal-cards" id="meals-${s.key}">
           ${meals.map(m => renderMealCard(m, targets[s.key])).join('')}
         </div>
+        ${hasMore ? `<button onclick="showAllMeals('${s.key}', ${targets[s.key]})" style="width:100%;margin-top:8px;padding:8px;background:var(--bg-elevated);border:1px solid var(--border);border-radius:var(--radius);color:var(--text-muted);font-size:12px;cursor:pointer">Show all ${allMeals.length} ${s.label.toLowerCase()} recipes ▾</button>` : ''}
       </div>`;
   }).join('') + `<p class="nutrition-note">Calorie counts are estimates based on standard ingredients. Actual values vary by brand and preparation. Always work with a certified sports dietitian for a fully personalized plan.</p>`;
 }
@@ -4227,6 +4405,50 @@ function toggleFAQ(id) {
   if (!isOpen) item.classList.add('open');
 }
 
+
+// ---- SHOW ALL MEALS (Nutrition tab) ----
+function showAllMeals(key, targetKcal) {
+  const allMeals = FOOD_DB[key];
+  const container = document.getElementById('meals-' + key);
+  if (!container) return;
+  container.innerHTML = allMeals.map(m => {
+    // Inline the renderMealCard logic
+    const diff = m.kcal - targetKcal;
+    const diffStr = diff === 0 ? '' : diff > 0 ? `+${diff}` : `${diff}`;
+    const diffColor = Math.abs(diff) < 80 ? 'var(--success)' : Math.abs(diff) < 150 ? 'var(--gold)' : 'var(--text-muted)';
+    const ingredientList = m.ingredients.map(i => '<li>' + i + '</li>').join('');
+    const stepList = m.steps.map((s,idx) => '<li><span style="color:var(--gold);font-weight:600;margin-right:6px">' + (idx+1) + '.</span>' + s + '</li>').join('');
+    return `
+      <div class="meal-card">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px">
+          <div class="meal-card-name">${m.name}</div>
+          <span style="font-size:10px;background:var(--bg-elevated);color:var(--gold);padding:2px 8px;border-radius:20px;white-space:nowrap;margin-left:8px;font-weight:600">${m.tag}</span>
+        </div>
+        <div class="meal-card-macros" style="margin-bottom:12px">
+          <span class="meal-macro-pill pill-kcal">${m.kcal} kcal</span>
+          <span class="meal-macro-pill pill-p">${m.p}g protein</span>
+          <span class="meal-macro-pill pill-c">${m.c}g carbs</span>
+          <span class="meal-macro-pill pill-f">${m.f}g fat</span>
+          ${diffStr ? '<span style="font-size:10px;color:' + diffColor + ';margin-left:4px">' + diffStr + ' vs target</span>' : ''}
+        </div>
+        <details style="margin-bottom:0">
+          <summary style="font-size:12px;color:var(--text-secondary);cursor:pointer;font-weight:600;letter-spacing:0.05em;list-style:none;padding:6px 0;border-top:1px solid var(--border)">▸ INGREDIENTS & RECIPE</summary>
+          <div style="padding-top:10px">
+            <div style="font-size:11px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px">Ingredients</div>
+            <ul style="list-style:disc;padding-left:18px;font-size:12px;color:var(--text-secondary);line-height:1.7;margin-bottom:12px">${ingredientList}</ul>
+            <div style="font-size:11px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;color:var(--text-muted);margin-bottom:6px">Instructions</div>
+            <ol style="list-style:none;padding-left:0;font-size:12px;color:var(--text-secondary);line-height:1.7;margin-bottom:12px">${stepList}</ol>
+            <div style="font-size:11px;background:rgba(201,168,76,0.08);border-left:2px solid var(--gold);padding:8px 10px;border-radius:0 4px 4px 0;color:var(--text-secondary)">
+              <strong style="color:var(--gold)">Tip:</strong> ${m.tip}
+            </div>
+          </div>
+        </details>
+      </div>`;
+  }).join('');
+  // Remove the "show all" button
+  const btn = container.parentElement.querySelector('button');
+  if (btn) btn.remove();
+}
 
 // ---- CUSTOM FOOD ENTRY ----
 function showCustomEntry() {
